@@ -22,30 +22,30 @@ const ShareLogs = () => {
    const [shareItemsStatus, setSharedItemStatus] = useState('');
    const [socket, setSocket] = useState(null);
 
-   useEffect(() => {
-       const newSocket = io("https://173.230.151.165:3001");
-       setSocket(newSocket);
-       return () => {
-           newSocket.disconnect();
-       };
-   }, []);
+//    useEffect(() => {
+//        const newSocket = io("http://173.230.151.165:3001");
+//        setSocket(newSocket);
+//        return () => {
+//            newSocket.disconnect();
+//        };
+//    }, []);
 
-   useEffect(() => {
-       if (socket) {
-           socket.on('itemShared', item => {
+//    useEffect(() => {
+//        if (socket) {
+//            socket.on('itemShared', item => {
             
-                if(typeof(item) === 'string') 
-                {
-                    setSharedItemStatus(item)
-                }
-                if(typeof(item) === 'object')
-                {
-                    dispatch(addingLogs(item));
-                }
+//                 if(typeof(item) === 'string') 
+//                 {
+//                     setSharedItemStatus(item)
+//                 }
+//                 if(typeof(item) === 'object')
+//                 {
+//                     dispatch(addingLogs(item));
+//                 }
               
-           });
-       }
-   }, [socket]);
+//            });
+//        }
+//    }, [socket]);
 
  
 

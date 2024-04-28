@@ -23,7 +23,7 @@ const ShareLogs = () => {
    const [socket, setSocket] = useState(null);
 
    useEffect(() => {
-       const newSocket = io("http://173.230.151.165:3001");
+       const newSocket = io("https://173.230.151.165:3001");
        setSocket(newSocket);
        return () => {
            newSocket.disconnect();

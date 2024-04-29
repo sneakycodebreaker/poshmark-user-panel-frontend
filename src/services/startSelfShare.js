@@ -9,7 +9,7 @@ export async function selfShare(closetCookies,closetUsername){
             cookies: closetCookies
           };
 
-        const url = 'http://173.230.151.165:3001/api/self-share';
+        const url = '/api/self-share';
         const response = await axios.post(url,postData);
         if (response.ok) {
             return { message: response.body }

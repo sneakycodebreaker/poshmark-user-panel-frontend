@@ -38,12 +38,12 @@ const SettingForm = () => {
     if (status) {
       localStorage.setItem("closetServices", "selfShare");
       setShareServiceString((prevValue) => prevValue + "selfShare");
-      // selfShare(cookie, username);
+      selfShare(cookie, username);
       return;
     } else {
       localStorage.removeItem("closetServices");
       setShareServiceString((prevValue) => prevValue.replace("selfShare", ""));
-      // socket.emit("stopProcess");
+      socket.emit("stopProcess");
       setShareServiceString(prevValue => prevValue.replace(/selfShare(,|$)/g, ''));
     }
   }

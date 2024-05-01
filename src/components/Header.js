@@ -4,7 +4,8 @@ import { Home, ScrollText, Settings, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
+import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
+import { UserInformation } from "./UserInformation";
 function Header() {
     const [tab, setTab] = useState('');
     const [sessionStatus, setSessionStatus] = useState('');
@@ -24,9 +25,15 @@ function Header() {
        
     };
 
+  
     useEffect(() => {
+        console.log('logging');
         const path = window.location.pathname.replace("/",'');
-        setTab(path)
+        if(path != 'home' && path != '') 
+        {
+            setTab(path)
+        } 
+     
         const status = localStorage.getItem('status');
         setSessionStatus(status == null ? '' : status);
     }, []);
@@ -43,7 +50,33 @@ function Header() {
 
     return (
         <div className="flex items-center justify-between p-2 max-w-6xl mx-auto ">
-            {sessionStatus === '' ? (
+            <SignedIn>
+                <div className="flex space-x-4 px-6">
+                    {/* {renderTabLink('/home', Home, 'Home', 'home')} */}
+                    {renderTabLink('/account', User, 'Account', 'account')}
+                    {renderTabLink('/logs', ScrollText, 'Logs', 'logs')}
+                    {renderTabLink('/settings', Settings, 'Settings', 'settings')}
+                </div>
+
+                <SignedIn>
+                    <UserButton showName={true} appearance={"w-20 h-20"}/>
+                </SignedIn>
+            </SignedIn>
+
+            <SignedOut>
+                <img
+                    className="w-36 h-7"
+                    src="https://d2gjrq7hs8he14.cloudfront.net/webpack4/logo-poshmark-magenta@2x-817f6e64db4f84be0421a7e07ca9a86c1c88fd3e7dfa5ef7f9e4231ddd0fdc99.png"
+                />
+
+                <SignedOut>
+                    <Button asChild variant='secondary'>
+                        <SignInButton />
+                    </Button>
+                </SignedOut>
+
+            </SignedOut>
+            {/* {sessionStatus === '' ? (
                 <>
                 <img
                 className="w-36 h-7"
@@ -61,11 +94,18 @@ function Header() {
                         {renderTabLink('/settings', Settings, 'Settings', 'settings')}
                     </div>
                     <div className="flex items-center space-x-4 px-6">
-                        <h3>Dummy user</h3>
-                        <Button variant="outline" onClick={logoutFunction}>Logout</Button>
+                        <SignedIn>
+                            <UserButton />
+                        </SignedIn>
+                        
+                        <SignedOut>
+                            <Button asChild>
+                                <SignInButton />
+                            </Button>
+                        </SignedOut>
                     </div>
                 </>
-            )}
+            )} */}
         </div>
     );
 }

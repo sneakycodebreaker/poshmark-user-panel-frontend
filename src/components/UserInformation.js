@@ -1,7 +1,11 @@
 'use client'
 import React from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+
 export const UserInformation = () => {
+
+
+
   return (
     <div className='flex flex-col justify-center items-center bg-white rounded-lg border py-4'>
         <Avatar>

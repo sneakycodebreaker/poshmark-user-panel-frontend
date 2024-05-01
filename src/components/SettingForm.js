@@ -38,12 +38,12 @@ const SettingForm = () => {
     if (status) {
       localStorage.setItem("closetServices", "selfShare");
       setShareServiceString((prevValue) => prevValue + "selfShare");
-      selfShare(cookie, username);
+      // selfShare(cookie, username);
       return;
     } else {
       localStorage.removeItem("closetServices");
       setShareServiceString((prevValue) => prevValue.replace("selfShare", ""));
-      socket.emit("stopProcess");
+      // socket.emit("stopProcess");
       setShareServiceString(prevValue => prevValue.replace(/selfShare(,|$)/g, ''));
     }
   }
@@ -62,13 +62,12 @@ const SettingForm = () => {
       {/* Enable Services */}
       <div className="flex items-center my-3 ">
         <div className="w-1/2">
-          <h6 className="text-lg">Enable services</h6>
+          <h6 className="text-lg" onClick={()=>{console.log(enableServices);}}>Enable services</h6>
         </div>
         <div className="w-1/2 flex justify-end">
           <Form.Check // prettier-ignore
-            size="lg"
-            defaultChecked={enableServices}
-            type="switch"
+             type={'switch'}
+            checked={enableServices} 
             onChange={(e) => {
               setEnableServices(e.currentTarget.checked);
             }}

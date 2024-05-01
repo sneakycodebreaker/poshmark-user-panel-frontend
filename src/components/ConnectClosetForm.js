@@ -110,6 +110,24 @@ const ConnectClosetForm = () => {
                 </Form.Group>
             </Form>
             <div>
+                <Form.Label className='font-semibold mb-3'>Closet Country</Form.Label>
+                <div>
+                    <Form.Check
+                    inline
+                    label="us"
+                    name="country"
+                    type={'radio'}
+                    />
+                    <Form.Check
+                        inline
+                        label="ca"
+                        name="country"
+                        type={'radio'}
+                    />
+                </div>
+             
+            </div>
+            <div>
                 <Button variant="outline" onClick={connectClosetFun}>Submit</Button>
             </div>
         </div>

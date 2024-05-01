@@ -1,8 +1,9 @@
+import ConnectClosetForm from "@/components/ConnectClosetForm";
 export default function Home() {
   return (
 
-    <main className="">
-     
-    </main>
+    <div className='p-6'>
+      {/* <ConnectClosetForm/> */}
+    </div>
   );
 }

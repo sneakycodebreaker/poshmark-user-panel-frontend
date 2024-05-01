@@ -27,7 +27,6 @@ function Header() {
 
   
     useEffect(() => {
-        console.log('logging');
         const path = window.location.pathname.replace("/",'');
         if(path != 'home' && path != '') 
         {

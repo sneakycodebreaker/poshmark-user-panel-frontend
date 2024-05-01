@@ -6,7 +6,7 @@ import Form from "react-bootstrap/Form";
 import { selfShare } from "@/services/startSelfShare";
 import io from "socket.io-client";
 
-// const socket = io("http://173.230.151.165:3001");
+const socket = io("http://173.230.151.165:3001");
 
 const SettingForm = () => {
   const [enableServices, setEnableServices] = useState(false);
@@ -43,8 +43,8 @@ const SettingForm = () => {
     } else {
       localStorage.removeItem("closetServices");
       setShareServiceString((prevValue) => prevValue.replace("selfShare", ""));
-      // socket.emit("stopProcess");
-      // setServiceString(prevValue => prevValue.replace(/selfShare(,|$)/g, ''));
+      socket.emit("stopProcess");
+      setShareServiceString(prevValue => prevValue.replace(/selfShare(,|$)/g, ''));
     }
   }
 

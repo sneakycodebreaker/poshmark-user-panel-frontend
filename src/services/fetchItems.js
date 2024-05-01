@@ -7,7 +7,7 @@ export async function fetchItem(closetCookies,closetUsername){
         cookie: closetCookies,
         closet: closetUsername
       };
-        const url = '/api/closet-items';
+        const url = 'http://173.230.151.165:3001/api/closet-items';
         const response = await axios.post(url,postData);
         return response.data;
       } catch (error) {  

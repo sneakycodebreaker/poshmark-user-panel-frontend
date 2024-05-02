@@ -83,7 +83,6 @@ const ConnectClosetForm = () => {
             let cookie_ = response?.cookie
 
             let closetAdd = await addCloset(dynamicCase,userId,closetName,closetName_,country_,closetImage_,cookie_)
-            console.log('closetAdd :',closetAdd);
             setClosetStatus(true);
             setLoading(false);
         }
@@ -128,7 +127,7 @@ const ConnectClosetForm = () => {
                 closetStatus ?
                 <Button variant="outline" onClick={()=>{logoutCloset()}}>logout</Button>
                 :
-                <Button disabled={loading} variant="outline" onClick={()=>{setConnectionBox(!connectionBox)}}>{connectionBox ? 'Back' : 'Connect'}</Button>
+                <Button disabled={loading} variant="outline" onClick={()=>{setConnectionBox(!connectionBox); setLinkedClosetCheck(false)}}>{connectionBox ? 'Back' : 'Connect'}</Button>
             }
         </div>
     </div>

@@ -62,7 +62,7 @@ const SettingForm = () => {
       {/* Enable Services */}
       <div className="flex items-center my-3 ">
         <div className="w-1/2">
-          <h6 className="text-lg" onClick={()=>{console.log(enableServices);}}>Enable services</h6>
+          <h6 className="text-lg" >Enable services</h6>
         </div>
         <div className="w-1/2 flex justify-end">
           <Form.Check // prettier-ignore

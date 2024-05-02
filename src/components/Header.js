@@ -29,17 +29,25 @@ function Header() {
 
   
     useEffect(() => {
+       
         const path = window.location.pathname.replace("/",'');
         if(path != 'home' && path != '') 
         {
             setTab(path)
         } 
 
+        if(!user)
+        {
+            localStorage.removeItem('closetCookies');
+            localStorage.removeItem("closetUsername");
+            localStorage.removeItem("closetImage");
+            localStorage.removeItem('userId');
+            localStorage.removeItem("closetServices");  
+        }
+
         if(user)
         {
             loginFunction(user)
-            console.log("User :",user);
-            console.log("User :",user.provider);
         }
       
     }, [user]);
@@ -75,7 +83,7 @@ function Header() {
                 />
 
                 <SignedOut>
-                    <Button asChild variant='outline'>
+                    <Button asChild variant='outline' >
                         <SignInButton />
                     </Button>
                 </SignedOut>

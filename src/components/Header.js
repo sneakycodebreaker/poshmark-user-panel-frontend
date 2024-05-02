@@ -10,18 +10,14 @@ import { addUser } from "@/services/addUser";
 function Header() {
     const { isLoaded, isSignedIn, user } = useUser();
     const [tab, setTab] = useState('');
-    const [sessionStatus, setSessionStatus] = useState('');
     const router = useRouter();
    
     const loginFunction = async(user) => {
-        
+        localStorage.setItem('userId', user?.id)    
         let dynamicCase = 'user';
         let username = user?.fullName;
         let email = user?.emailAddresses[0]?.emailAddress;
-        console.log("Login function");
-        let response =  await addUser(dynamicCase,username,email);
-        console.log("response :",response);
-     
+        await addUser(dynamicCase,username,email);  
     };
 
     const logoutFunction = () => {

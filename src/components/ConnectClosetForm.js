@@ -8,9 +8,12 @@ import ClosetFollowers from './ClosetFollowers';
 import ClosetFollowing from './ClosetFollowing';
 import { connectCloset } from '@/services/connectCloset';
 import { Skeleton } from "@/components/ui/skeleton"
+import { addCloset } from '@/services/addCloset';
+import { checkCloset } from '@/services/checkCloset';
 const ConnectClosetForm = () => {
     const [closetName,setClosetName] = useState('');
     const [closetPassword,setClosetPassword] = useState('');
+    const [closetCountry,setClosetCountry] = useState('');
     const [closetNameCheck,setClosetNameCheck] = useState('');
     const [closetPasswordCheck,setClosetPasswordCheck] = useState('');
 
@@ -22,8 +25,11 @@ const ConnectClosetForm = () => {
     const [closetStatus,setClosetStatus] = useState(false);
     const [tab,setTab] = useState('');
 
+    const [linkedClosetCheck,setLinkedClosetCheck] = useState(false);
+
     async function connectClosetFun(){
-       
+        setLinkedClosetCheck(false)
+        let userId = localStorage.getItem('userId');
         if(closetName === '')
         {
             setClosetNameCheck(true);
@@ -34,17 +40,54 @@ const ConnectClosetForm = () => {
             setClosetPasswordCheck(true);
             return
         }
-        setLoading(true);
-        setConnectionBox(false);
-        let response =  await connectCloset(closetName,closetPassword);
-        setClosetCookies(response.cookies);
-        setClosetUsername(response?.ui?.dh);
-        setClosetImage(response?.ui?.uit);
-        localStorage.setItem('closetCookies', response?.cookie);
-        localStorage.setItem("closetUsername", response?.ui?.dh);
-        localStorage.setItem("closetImage", response?.ui?.uit);
-        setClosetStatus(true);
-        setLoading(false);
+        let dynamicCase ='closet_check'
+        let closetCheckResponse = await checkCloset(dynamicCase,closetName,userId);
+       
+        if(closetCheckResponse.message === 'closet linked')
+        {
+            setLinkedClosetCheck(true);
+            return
+        }
+        if(closetCheckResponse.message[0] && typeof (closetCheckResponse.message[0]) == 'object')
+        {
+            setClosetCookies(closetCheckResponse.message[0].cookies);
+            setClosetUsername(closetCheckResponse.message[0].closetname);
+            setClosetImage(closetCheckResponse.message[0].closet_img);
+    
+            localStorage.setItem('closetCookies', closetCheckResponse.message[0].cookies);
+            localStorage.setItem("closetUsername", closetCheckResponse.message[0].closetname);
+            localStorage.setItem("closetImage", closetCheckResponse.message[0].closet_img);
+            setConnectionBox(false);
+            setClosetStatus(true);
+            return
+        }
+        if(closetCheckResponse.message == 'allow')
+        {
+            setLoading(true);
+            setConnectionBox(false);
+         
+            let response =  await connectCloset(closetName,closetPassword);
+            setClosetCookies(response.cookies);
+            setClosetUsername(response?.ui?.dh);
+            setClosetImage(response?.ui?.uit);
+    
+            localStorage.setItem('closetCookies', response?.cookie);
+            localStorage.setItem("closetUsername", response?.ui?.dh);
+            localStorage.setItem("closetImage", response?.ui?.uit);
+
+            dynamicCase = 'poshmark';
+            let uid_ = response?.ui?.uid;
+            let closetName_ = response?.ui?.dh;
+            let country_ = closetCountry;
+            let closetImage_ = response?.ui?.uit
+            let cookie_ = response?.cookie
+
+            let closetAdd = await addCloset(dynamicCase,userId,closetName,closetName_,country_,closetImage_,cookie_)
+            console.log('closetAdd :',closetAdd);
+            setClosetStatus(true);
+            setLoading(false);
+        }
+       
     }
 
     async function logoutCloset(){
@@ -115,14 +158,18 @@ const ConnectClosetForm = () => {
                     <Form.Check
                     inline
                     label="us"
+                    value={'us'}
                     name="country"
                     type={'radio'}
+                    onChange={(e)=>{setClosetCountry(e.target.value)}}
                     />
                     <Form.Check
                         inline
                         label="ca"
+                        value={'ca'}
                         name="country"
                         type={'radio'}
+                        onChange={(e)=>{setClosetCountry(e.target.value)}}
                     />
                 </div>
              
@@ -130,6 +177,12 @@ const ConnectClosetForm = () => {
             <div>
                 <Button variant="outline" onClick={connectClosetFun}>Submit</Button>
             </div>
+        </div>
+    }
+    {
+        linkedClosetCheck && 
+        <div>
+            <p className='text-center text-rose-700 font-semibold text-lg'>Closet already linked, try another one!</p>
         </div>
     }
     {

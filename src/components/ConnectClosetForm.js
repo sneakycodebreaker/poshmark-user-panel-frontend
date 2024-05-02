@@ -50,13 +50,15 @@ const ConnectClosetForm = () => {
         }
         if(closetCheckResponse.message[0] && typeof (closetCheckResponse.message[0]) == 'object')
         {
+            
+            localStorage.setItem('closetCookies', closetCheckResponse.message[0].cookies);
+            localStorage.setItem("closetUsername", closetCheckResponse.message[0].closetname);
+            localStorage.setItem("closetImage", closetCheckResponse.message[0].closet_img);
+            
             setClosetCookies(closetCheckResponse.message[0].cookies);
             setClosetUsername(closetCheckResponse.message[0].closetname);
             setClosetImage(closetCheckResponse.message[0].closet_img);
     
-            localStorage.setItem('closetCookies', closetCheckResponse.message[0].cookies);
-            localStorage.setItem("closetUsername", closetCheckResponse.message[0].closetname);
-            localStorage.setItem("closetImage", closetCheckResponse.message[0].closet_img);
             setConnectionBox(false);
             setClosetStatus(true);
             return
@@ -100,6 +102,7 @@ const ConnectClosetForm = () => {
         let cookie = localStorage.getItem('closetCookies');
         let username = localStorage.getItem('closetUsername');
         let image = localStorage.getItem('closetImage');
+        console.log(cookie ,username,image);
         if(cookie !== null && username !== null && image !== null)
         {
             setClosetCookies(cookie);

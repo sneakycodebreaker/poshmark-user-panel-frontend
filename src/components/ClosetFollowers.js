@@ -12,11 +12,13 @@ import {
 import Image from 'next/image';
 import { fetchFollowers } from '@/services/fetchFollowers';
 import { Skeleton } from "@/components/ui/skeleton"
+import { PaginationSection } from './Paganation';
 const ClosetFollowers = ({closetUsername,closetCookies}) => {
   const [Followers, setFollowers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage] = useState(30); 
 
   const fetchData = async() => {
      setLoading(true)
@@ -25,12 +27,16 @@ const ClosetFollowers = ({closetUsername,closetCookies}) => {
      setLoading(false);
   }
 
+    const indexOfLastUser = currentPage * usersPerPage;
+    const indexOfFirstUser = indexOfLastUser - usersPerPage;
+    const currentUsers = Followers.slice(indexOfFirstUser, indexOfLastUser);
+
   useEffect(() => {
       fetchData();
   }, []);
 
   return (
-    <div className='m-4  '>
+    <div className='m-4  flex flex-col gap-3'>
         <Table>
             <TableHeader >
                 <TableRow>
@@ -42,35 +48,21 @@ const ClosetFollowers = ({closetUsername,closetCookies}) => {
             {
                 loading === true ?
                 <>
-                    <TableRow>
-                        <TableCell className='p-2'>
-                            <Skeleton className="h-12 w-12 rounded-full" />
-                        </TableCell>
-                        <TableCell className='p-2'>
-                            <Skeleton className="h-4"/>
-                        </TableCell>
-                    </TableRow>
-                    <TableRow>
-                        <TableCell className='p-2'>
-                            <Skeleton className="h-12 w-12 rounded-full" />
-                        </TableCell>
-                        <TableCell className='p-2'>
-                            <Skeleton className="h-4"/>
-                        </TableCell>
-                    </TableRow>
-                    <TableRow>
-                        <TableCell className='p-2'>
-                            <Skeleton className="h-12 w-12 rounded-full" />
-                        </TableCell>
-                        <TableCell className='p-2'>
-                            <Skeleton className="h-4"/>
-                        </TableCell>
-                    </TableRow>
+                    {[1, 2, 3].map((key) => (
+                        <TableRow key={key}>
+                            <TableCell className='p-2'>
+                                <Skeleton className="h-12 w-12 rounded-full" />
+                            </TableCell>
+                            <TableCell className='p-2'>
+                                <Skeleton className="h-4" />
+                            </TableCell>
+                        </TableRow>
+                    ))}
                 </>
                 :
                 <>
                 {
-                    Followers?.map((user) => (
+                    currentUsers?.map((user) => (
                         <TableRow key={user.id}>
                             <TableCell className='p-2'>
                                 <Image 
@@ -89,10 +81,19 @@ const ClosetFollowers = ({closetUsername,closetCookies}) => {
                 }                             
                 </>              
             }
-            </TableBody>
-
-          
+            </TableBody>    
         </Table>
+            {
+                loading === false ?
+                <PaginationSection
+                totalUsers={Followers.length}
+                usersPerPage={usersPerPage}
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                />
+                :
+                ''
+            }
     </div>
   )
 }

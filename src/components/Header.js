@@ -7,6 +7,17 @@ import { useEffect, useState } from "react";
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 import { useUser } from "@clerk/nextjs";
 import { addUser } from "@/services/addUser";
+
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+  } from "@/components/ui/pagination"
+
 function Header() {
     const { isLoaded, isSignedIn, user } = useUser();
     const [tab, setTab] = useState('');
@@ -35,8 +46,8 @@ function Header() {
         {
             setTab(path)
         } 
-
-        if(!user)
+        console.log('user :',user);
+        if(user == null)
         {
             localStorage.removeItem('closetCookies');
             localStorage.removeItem("closetUsername");
@@ -89,36 +100,6 @@ function Header() {
                 </SignedOut>
 
             </SignedOut>
-            {/* {sessionStatus === '' ? (
-                <>
-                <img
-                className="w-36 h-7"
-                src="https://d2gjrq7hs8he14.cloudfront.net/webpack4/logo-poshmark-magenta@2x-817f6e64db4f84be0421a7e07ca9a86c1c88fd3e7dfa5ef7f9e4231ddd0fdc99.png"
-                />
-                <Button variant="outline" onClick={loginFunction}>Login</Button>
-
-                </>
-            ) : (
-                <>
-                    <div className="flex space-x-4 px-6">
-                        {renderTabLink('/home', Home, 'Home', 'home')}
-                        {renderTabLink('/account', User, 'Account', 'account')}
-                        {renderTabLink('/logs', ScrollText, 'Logs', 'logs')}
-                        {renderTabLink('/settings', Settings, 'Settings', 'settings')}
-                    </div>
-                    <div className="flex items-center space-x-4 px-6">
-                        <SignedIn>
-                            <UserButton />
-                        </SignedIn>
-                        
-                        <SignedOut>
-                            <Button asChild>
-                                <SignInButton />
-                            </Button>
-                        </SignedOut>
-                    </div>
-                </>
-            )} */}
         </div>
     );
 }

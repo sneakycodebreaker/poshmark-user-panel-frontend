@@ -1,9 +1,10 @@
-import ConnectClosetForm from "@/components/ConnectClosetForm";
-export default function Home() {
+import React from 'react'
+const page = () => {
   return (
-
-    <div className='p-6'>
-      {/* <ConnectClosetForm/> */}
+    <div>
+      
     </div>
-  );
+  )
 }
+
+export default page

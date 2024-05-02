@@ -5,17 +5,23 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
-import { UserInformation } from "./UserInformation";
+import { useUser } from "@clerk/nextjs";
+import { addUser } from "@/services/addUser";
 function Header() {
+    const { isLoaded, isSignedIn, user } = useUser();
     const [tab, setTab] = useState('');
     const [sessionStatus, setSessionStatus] = useState('');
     const router = useRouter();
-
-    const loginFunction = () => {
-        setSessionStatus('login');
-        localStorage.setItem('status', 'login');
-        router.push('/home');
-       
+   
+    const loginFunction = async(user) => {
+        
+        let dynamicCase = 'user';
+        let username = user?.fullName;
+        let email = user?.emailAddresses[0]?.emailAddress;
+        console.log("Login function");
+        let response =  await addUser(dynamicCase,username,email);
+        console.log("response :",response);
+     
     };
 
     const logoutFunction = () => {
@@ -32,10 +38,15 @@ function Header() {
         {
             setTab(path)
         } 
-     
-        const status = localStorage.getItem('status');
-        setSessionStatus(status == null ? '' : status);
-    }, []);
+
+        if(user)
+        {
+            loginFunction(user)
+            console.log("User :",user);
+            console.log("User :",user.provider);
+        }
+      
+    }, [user]);
 
     const renderTabLink = (href, Icon, text, tabName) => (
         <Link href={href} passHref
@@ -56,7 +67,6 @@ function Header() {
                     {renderTabLink('/logs', ScrollText, 'Logs', 'logs')}
                     {renderTabLink('/settings', Settings, 'Settings', 'settings')}
                 </div>
-
                 <SignedIn>
                     <UserButton showName={true} appearance={"w-20 h-20"}/>
                 </SignedIn>
@@ -69,7 +79,7 @@ function Header() {
                 />
 
                 <SignedOut>
-                    <Button asChild variant='secondary'>
+                    <Button asChild variant='outline'>
                         <SignInButton />
                     </Button>
                 </SignedOut>

@@ -4,7 +4,9 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import Form from "react-bootstrap/Form";
 import { selfShare } from "@/services/startSelfShare";
+import { fetchCloset } from "@/services/fetchCloset";
 import io from "socket.io-client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const socket = io("http://173.230.151.165:3001");
 
@@ -30,10 +32,20 @@ const SettingForm = () => {
   const [discountAvailabilityCount, setDiscountAvailabilityCount] =
     useState("");
   const [noDiscount, setNoDiscount] = useState(false);
+  const [connectedCloset,setConnectedCloset] = useState([]);
+  const [selectedCloset, setSelectedCloset] = useState(null);
 
+  const [selectedClosetCookie,setSelectedClosetCookie] = useState('');
+  const [selectedClosetName,setSelectedClosetName] = useState('');
+
+  async function fetchCloset_(){
+    let userId = localStorage.getItem('userId');
+    let response = await fetchCloset(userId);
+    setConnectedCloset(response?.closets);
+  }
   function selfShareService(status) {
-    let cookie = localStorage.getItem("closetCookies");
-    let username = localStorage.getItem("closetUsername");
+    let cookie = selectedClosetCookie;
+    let username = selectedClosetName;
 
     if (status) {
       localStorage.setItem("closetServices", "selfShare");
@@ -49,16 +61,34 @@ const SettingForm = () => {
   }
 
   useEffect(() => {
-    let services = localStorage.getItem("closetServices");
-    if (services !== null) {
-      setEnableServices(true);
-      if (services === "selfShare") {
-        setSelfShare(true);
-      }
-    }
+    fetchCloset_()
   }, []);
   return (
     <>
+      {/* Connected Closet */}
+      <div className="py-2 px-4 flex flex-col gap-2 bg-white rounded mt-3">
+        <h4 className="font-semibold border-b pb-1">Connected Closets</h4>
+        <div className="flex flex-row gap-3 ">     
+          {
+            connectedCloset.map((closet,index)=>(
+              <div key={index} className={`${selectedCloset == index ? 'border-b-2 border-blue-500' : ''} pb-2 `} onClick={()=>{
+                setSelectedCloset(index); 
+                setSelectedClosetCookie(closet.cookie);
+                setSelectedClosetName(closet.closetname);
+                
+                }}>
+                  <Avatar className='cursor-pointer w-10 h-10' >
+                  <AvatarImage src={closet.closet_img}  />
+                  <AvatarFallback>CN</AvatarFallback>
+                </Avatar> 
+              </div>
+            
+            ))
+          }
+        </div>
+      </div>
+      
+
       {/* Enable Services */}
       <div className="flex items-center my-3 ">
         <div className="w-1/2">

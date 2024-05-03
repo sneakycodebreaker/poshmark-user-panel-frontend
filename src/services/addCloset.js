@@ -1,10 +1,11 @@
 import axios from 'axios';
 
-export async function addCloset(dynamicCase,userId,closetNameEntered,closetName,country,closetImage,cookie){
+export async function addCloset(dynamicCase,userId,closet_id,closetNameEntered,closetName,country,closetImage,cookie){
     try {
         const postData = {
             dynamicCase: dynamicCase,
             userId: userId,
+            closet_id:closet_id,
             closetNameEntered: closetNameEntered,
             closetName: closetName,
             country:country,

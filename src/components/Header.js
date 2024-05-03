@@ -24,11 +24,13 @@ function Header() {
     const router = useRouter();
    
     const loginFunction = async(user) => {
-        localStorage.setItem('userId', user?.id)    
+      
         let dynamicCase = 'user';
         let username = user?.fullName;
         let email = user?.emailAddresses[0]?.emailAddress;
-        await addUser(dynamicCase,username,email);  
+        let response = await addUser(dynamicCase,username,email);  
+        console.log("User :",response);
+        localStorage.setItem('userId', response?.message)    
     };
 
     const logoutFunction = () => {
@@ -46,16 +48,6 @@ function Header() {
         {
             setTab(path)
         } 
-        console.log('user :',user);
-        if(user == null)
-        {
-            localStorage.removeItem('closetCookies');
-            localStorage.removeItem("closetUsername");
-            localStorage.removeItem("closetImage");
-            localStorage.removeItem('userId');
-            localStorage.removeItem("closetServices");  
-        }
-
         if(user)
         {
             loginFunction(user)

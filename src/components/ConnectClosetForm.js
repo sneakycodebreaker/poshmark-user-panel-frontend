@@ -10,6 +10,14 @@ import { connectCloset } from '@/services/connectCloset';
 import { Skeleton } from "@/components/ui/skeleton"
 import { addCloset } from '@/services/addCloset';
 import { checkCloset } from '@/services/checkCloset';
+import { fetchClosetStats } from '@/services/fetchClosetStats';
+import { fetchCloset } from '@/services/fetchCloset';
+import { removeCloset } from '@/services/removeCloset';
+import Spinner from 'react-bootstrap/Spinner';
+import Image from 'next/image';
+import { CircleX } from 'lucide-react';
+
+
 const ConnectClosetForm = () => {
     const [closetName,setClosetName] = useState('');
     const [closetPassword,setClosetPassword] = useState('');
@@ -17,9 +25,7 @@ const ConnectClosetForm = () => {
     const [closetNameCheck,setClosetNameCheck] = useState('');
     const [closetPasswordCheck,setClosetPasswordCheck] = useState('');
 
-    const [closetImage,setClosetImage] = useState('');
-    const [closetUsername,setClosetUsername] = useState('');
-    const [closetCookies,setClosetCookies] = useState('');
+    const [connectedCloset,setConnectedCloset] = useState([]);
     const [loading,setLoading] = useState(false);
     const [connectionBox,setConnectionBox] = useState(false);
     const [closetStatus,setClosetStatus] = useState(false);
@@ -48,96 +54,101 @@ const ConnectClosetForm = () => {
             setLinkedClosetCheck(true);
             return
         }
-        if(closetCheckResponse.message[0] && typeof (closetCheckResponse.message[0]) == 'object')
-        {
-            
-            localStorage.setItem('closetCookies', closetCheckResponse.message[0].cookies);
-            localStorage.setItem("closetUsername", closetCheckResponse.message[0].closetname);
-            localStorage.setItem("closetImage", closetCheckResponse.message[0].closet_img);
-            
-            setClosetCookies(closetCheckResponse.message[0].cookies);
-            setClosetUsername(closetCheckResponse.message[0].closetname);
-            setClosetImage(closetCheckResponse.message[0].closet_img);
-    
-            setConnectionBox(false);
-            setClosetStatus(true);
-            return
-        }
         if(closetCheckResponse.message == 'allow')
         {
             setLoading(true);
             setConnectionBox(false);
          
             let response =  await connectCloset(closetName,closetPassword);
-            setClosetCookies(response.cookies);
-            setClosetUsername(response?.ui?.dh);
-            setClosetImage(response?.ui?.uit);
-    
-            localStorage.setItem('closetCookies', response?.cookie);
-            localStorage.setItem("closetUsername", response?.ui?.dh);
-            localStorage.setItem("closetImage", response?.ui?.uit);
-
+           
             dynamicCase = 'poshmark';
-            let uid_ = response?.ui?.uid;
+            let closet_id = response?.ui?.uid;
             let closetName_ = response?.ui?.dh;
             let country_ = closetCountry;
             let closetImage_ = response?.ui?.uit
             let cookie_ = response?.cookie
 
-            let closetAdd = await addCloset(dynamicCase,userId,closetName,closetName_,country_,closetImage_,cookie_)
+
+            let closetAdd = await addCloset(dynamicCase,userId,closet_id,closetName,closetName_,country_,closetImage_,cookie_);
+
+            const response_ = await fetchClosetStats(closet_id, cookie_);
+
+            let newClosetObj = {
+                id : closetAdd?.message,
+                user_id : userId,
+                posh_id : null,
+                closet_id : closet_id,
+                closetname : closetName_,
+                closetname_entered :closetName,
+                country : country_,
+                closet_img : closetImage_,
+                cookie : cookie_,
+                proxy : null,
+                new_closets_shared: response_.new_closets_shared,
+                community_shares: response_.community_shares,
+                self_shares: response_.self_shares,
+                available_listings: response_.available_listings
+            }
+           
+            setConnectedCloset(prevArray => [...prevArray, newClosetObj]);
+
             setClosetStatus(true);
             setLoading(false);
         }
        
     }
 
-    async function logoutCloset(){
-        localStorage.removeItem('closetCookies');
-        localStorage.removeItem("closetUsername");
-        localStorage.removeItem("closetImage");
-        setClosetStatus(false);
+    async function logoutCloset(closet_id) {
+        let userId = localStorage.getItem('userId');
+        setConnectedCloset(prevArray => prevArray.filter(closet => closet.closet_id !== closet_id));
+        let response = await removeCloset(userId,closet_id);
     }
 
+    async function fetchCloset_() {
+        let userId = localStorage.getItem('userId');
+        let response = await fetchCloset(userId);
+        let promises = response?.closets.map(async (element, index) => {
+            const response_ = await fetchClosetStats(element.closet_id, element.cookie);
+            return {
+                ...element,
+                new_closets_shared: response_.new_closets_shared,
+                community_shares: response_.community_shares,
+                self_shares: response_.self_shares,
+                available_listings: response_.available_listings
+            };
+        });
+        let updatedClosets = await Promise.all(promises); 
+        setConnectedCloset(updatedClosets);
+    }
+
+
+
     useEffect(()=>{
-        let cookie = localStorage.getItem('closetCookies');
-        let username = localStorage.getItem('closetUsername');
-        let image = localStorage.getItem('closetImage');
-        console.log(cookie ,username,image);
-        if(cookie !== null && username !== null && image !== null)
-        {
-            setClosetCookies(cookie);
-            setClosetUsername(username);
-            setClosetImage(image);
-            setClosetStatus(true);
-        }
+        fetchCloset_()
     },[])
 
   return (
-    <main className='flex flex-col gap-4'>
+    <main className='flex flex-col gap-3'>
     
-    <div className='flex items-center justify-between'>
+    <div className='flex items-center justify-between border-b pb-2'>
         <div>
             {
                 loading ?
-                <p className='font-semibold text-lg'>Connecting closet</p>
+                <p className='font-semibold text-lg'>Connecting closet (Due to captcha, the login can take upto 2 minutes)</p>
                 :
-                <p className='font-semibold text-lg'>{closetStatus ? "Connected" : 'Connect closet'}</p>
+                <p className='font-semibold text-lg'>Connect closet</p>
 
             }
+          
         </div>      
         <div>
-            {
-                closetStatus ?
-                <Button variant="outline" onClick={()=>{logoutCloset()}}>logout</Button>
-                :
-                <Button disabled={loading} variant="outline" onClick={()=>{setConnectionBox(!connectionBox); setLinkedClosetCheck(false)}}>{connectionBox ? 'Back' : 'Connect'}</Button>
-            }
+            <Button disabled={loading} variant="outline" onClick={()=>{setConnectionBox(!connectionBox); setLinkedClosetCheck(false)}}>{connectionBox ? 'Back' : 'Connect'}</Button>
         </div>
     </div>
 
     {
         connectionBox &&
-        <div className='flex flex-row items-end justify-between gap-4 bg-white rounded lg p-4'>
+        <div className='flex flex-row items-end justify-between gap-4 bg-white rounded lg p-4 '>
             <Form className='flex gap-3 flex-1'>
                 <Form.Group className='w-100'>
                     <Form.Label className='font-semibold'>Closet Name</Form.Label>
@@ -191,67 +202,66 @@ const ConnectClosetForm = () => {
         loading &&
         <div className='flex flex-col justify-center items-start bg-white rounded-lg border py-4 px-4'>
                 <div className='flex flex-col justify-center items-center border-b w-full gap-2 pb-2'>
-                    <Skeleton className="h-12 w-12 rounded-full" />  
+                    <Skeleton className="h-12 w-12 rounded-full flex items-center justify-center">
+                    <Spinner animation="border" role="status"/>
+                    </Skeleton>  
                     <Skeleton className="h-4 w-52"/> 
                 </div>
             
             </div>
     }
-    {
-        closetStatus &&
-        <>
-            <div className='flex flex-col justify-center items-start bg-white rounded-lg border py-4 px-4'>
-                <div className='flex flex-col justify-center items-center border-b w-full gap-2 pb-2'>
-                    <Avatar>
-                        <AvatarImage src={closetImage}  />
-                        <AvatarFallback>CN</AvatarFallback>
-                    </Avatar>   
-                    <div className='text-center'>
-                        <p className='font-semibold'>
-                           {closetUsername}
-                        </p>
-                    </div>   
+     <>
+            <div className='flex items-center justify-between'>
+                <div>
+                    <p className='font-semibold text-lg'>Connected Closets</p>
+                </div>      
+            </div>
+          {
+            connectedCloset.map((closet,key)=>(
+                <div key={key} className='flex flex-col  bg-white rounded-lg border px-3 py-2 gap-2 drop-shadow'>
+                    <div className='flex flex-row justify-end items-center pb-2'>
+                        <CircleX className='text-red-600 cursor-pointer' onClick={()=>{logoutCloset(closet?.closet_id)}}/>
+                    </div>
+                    <div className='flex flex-row justify-between items-center  w-full gap-5 pb-2'>
+                            <div className='flex flex-col items-center justify-center gap-2'>
+                                <Image
+                                src={closet.closet_img}
+                                width={80}
+                                height={80}
+                                className='rounded'
+                                alt='CN'
+                                />
+                                <div className='text-center'>
+                                    <p className='font-semibold'>
+                                    {closet.closetname}
+                                    </p>
+                                </div>   
+                            </div>
+                             <div>
+                                <div className='flex flex-col gap-1 '>
+                                    <div className='flex flex-row justify-between items-center gap-3'>
+                                        <h2 className='font-semibold'>Self Shares:</h2>
+                                        <span>{closet.self_shares}</span>
+                                    </div>
+                                    <div className='flex flex-row justify-between items-center gap-3'>
+                                        <h2 className='font-semibold'>Available Listings:</h2>
+                                        <span>{closet.available_listings}</span>
+                                    </div>
+                                    <div className='flex flex-row justify-between items-center gap-3'>
+                                        <h2 className='font-semibold'>Community Shares:</h2>
+                                        <span>{closet.community_shares}</span>
+                                    </div>
+                                    <div className='flex flex-row justify-between items-center gap-3'>
+                                        <h2 className='font-semibold'>New Poshers Shared:</h2>
+                                        <span>{closet.new_closets_shared}</span>
+                                    </div>
+                                </div>
+                            </div>
+                    </div>
                 </div>
-            
-
-                <div className='d-flex flex-row items-center  gap-4 pt-3 w-full'>
-                    
-                    <p className={`font-semibold cursor-pointer ${tab === 'items' ? 'text-sky-400 border-b border-sky-400' : ''}`} onClick={()=>{setTab("items")}}>
-                        Items
-                    </p>
-                    <p className={`font-semibold cursor-pointer ${tab === 'followers' ? 'text-sky-400 border-b border-sky-400' : ''}`} onClick={()=>{setTab("followers")}}>
-                        Followers
-                    </p>
-                    <p className={`font-semibold cursor-pointer ${tab === 'following' ? 'text-sky-400 border-b border-sky-400' : ''}`} onClick={()=>{setTab("following")}}>
-                        Following
-                    </p>
-                </div> 
-
-            
-            </div>
-            <div>
-                    {
-                        tab === 'items' && 
-                        <div className='w-full py-3 bg-white rounded-lg'>
-                            <ClosetItems closetCookies={closetCookies} closetUsername={closetUsername}/>
-                        </div>
-                    }
-                    {
-                        tab === 'followers' && 
-                        <div className='w-full py-3 bg-white rounded-lg'>
-                            <ClosetFollowers closetCookies={closetCookies} closetUsername={closetUsername}/>
-                        </div>
-                    }
-                    {
-                        tab === 'following' && 
-                        <div className='w-full py-3 bg-white rounded-lg'>
-                            <ClosetFollowing closetCookies={closetCookies} closetUsername={closetUsername}/>
-                        </div>
-                    }
-            </div>
+            ))
+          }
         </>
-       
-    }
     
     </main>
     

@@ -13,16 +13,28 @@ import {
 import Image from 'next/image';
 import { useDispatch, useSelector } from 'react-redux';
 import { addingLogs } from '@/utils/logsSlice';
-
+import { fetchCloset } from '@/services/fetchCloset';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 const ShareLogs = () => {
 
     const logs = useSelector((state) => state.counter.value)
     const dispatch = useDispatch()
 
-   const [shareItemsStatus, setSharedItemStatus] = useState('');
+   const [shareItemsStatus, setSharedItemStatus] = useState('Share');
    const [socket, setSocket] = useState(null);
 
+   const [connectedCloset,setConnectedCloset] = useState([]);
+   const [selectedCloset, setSelectedCloset] = useState(null);
+   const [selectedLogs, setSelectedLogs] = useState(null);
+
+   async function fetchCloset_(){
+    let userId = localStorage.getItem('userId');
+    let response = await fetchCloset(userId);
+    setConnectedCloset(response?.closets);
+  }
+
    useEffect(() => {
+        fetchCloset_();
        const newSocket = io("http://173.230.151.165:3001");
        setSocket(newSocket);
        return () => {
@@ -31,9 +43,10 @@ const ShareLogs = () => {
    }, []);
 
    useEffect(() => {
+       
        if (socket) {
            socket.on('itemShared', item => {
-            
+                console.log('itemShared', item);
                 if(typeof(item) === 'string') 
                 {
                     setSharedItemStatus(item)
@@ -50,51 +63,63 @@ const ShareLogs = () => {
  
 
    return (
-    <div className='m-4 p-4 bg-white rounded-lg'>
-          <div className='flex flex-row justify-between pb-2 px-1'>
-            <p className="text-lg font-semibold">Share Logs</p>
-            <p className="text-lg font-semibold text-right">Total: {logs.length}</p>
+
+    <>
+     {/* Connected Closet */}
+        <div className="py-2 px-4 flex flex-col gap-2 bg-white rounded mt-3 mb-2">
+            <h4 className='font-semibold border-b pb-1'>Connected Closets</h4>
+            <div className="flex flex-row gap-3 ">     
+            {
+                connectedCloset.map((closet,index)=>(
+                <div key={index} className={`${selectedCloset == index ? 'border-b-2 border-blue-500' : ''} pb-2 `} onClick={()=>{setSelectedCloset(index)}}>
+                    <Avatar className='cursor-pointer w-10 h-10' >
+                    <AvatarImage src={closet.closet_img}  />
+                    <AvatarFallback>CN</AvatarFallback>
+                    </Avatar> 
+                </div>
+                
+                ))
+            }
+            </div>
+        </div>
+        <div className='px-4 py-2 bg-white rounded-lg mb-2'>
+
+          <div className='flex flex-row gap-3  border-b mb-3'>
+            <div onClick={()=>{setSelectedLogs("Share")}} className={`${selectedLogs === 'Share' ? 'border-b-2 border-blue-500 pb-1' : ""} cursor-pointer`}>
+                <p className="text-lg">Share Logs</p>
+            </div>
+            <div onClick={()=>{setSelectedLogs("Follow")}} className={`${selectedLogs === 'Follow' ? 'border-b-2 border-blue-500 pb-1' : ""} cursor-pointer`}>
+                <p className="text-lg">Follow Logs</p>
+            </div>
+            
           </div>
           {
             logs?.length == 0 ?
-            <p className="text-base font-semibold text-center">{shareItemsStatus === '' ? "No Share logs" : shareItemsStatus}</p>
+            <p className="text-base font-semibold text-center">No logs</p>
             :
-            <Table>
-            <TableHeader>
-                <TableRow>
-                <TableHead className="w-[100px] p-2">Image</TableHead>
-                <TableHead className="p-2">Title</TableHead>
-                <TableHead className="w-[100px] p-2">Category</TableHead>
-                <TableHead className="w-[100px] p-2">Price</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-            <>
-              {
-                logs?.map((item) => (
-                    <TableRow key={item.id}>
-                        <TableCell className='p-2'>
-                            <Image 
-                                src={item?.picture_url}
-                                alt="Item Picture"
-                                width={48}
-                                height={48}
-                                className='rounded-full'
-                            />
-                        </TableCell>
-                        <TableCell className='p-2'>
-                            <p>{item?.title}</p> 
-                        </TableCell>
-                        <TableCell className='p-2'>{item?.category}</TableCell>
-                        <TableCell className='p-2'>{item?.price}</TableCell>
-                    </TableRow>
-                ))
-              }
-            </>                  
-            </TableBody>
-            </Table>
+            <div className='grid grid-cols-5 gap-3'>
+                {
+                    logs.map((item,index)=>(
+
+                    <div key={index} className='bg-white rounded border drop-shadow '>
+                        <img src={item?.picture_url} 
+                        className='w-56 h-44 rounded-t'/>
+                        <div className='flex flex-col p-2 text-wrap gap-1'>
+                            <span className='line-clamp-1 font-serif'>{item?.title}</span>
+                          
+                            <div className='flex flex-col'>
+                                <span className='font-semibold '>${item?.price}</span>
+                                <span className='text-sm font-semibold '>Size: <span className='font-normal'>{item?.size}</span></span>
+                            </div>             
+                        </div>
+                    </div>
+                    ))
+                }        
+            </div>
           }
-    </div>
+        </div>
+    </>
+    
    )
 }
 

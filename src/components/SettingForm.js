@@ -111,17 +111,25 @@ const SettingForm = () => {
         <div className="flex flex-row gap-3 ">     
           {
             connectedCloset.map((closet,index)=>(
-              <div key={index} className={`${selectedCloset == index ? 'border-b-2 border-blue-500' : ''} pb-2 `} onClick={()=>{
-                setSelectedCloset(index); 
-                setSelectedClosetCookie(closet.cookie);
-                setSelectedClosetName(closet.closetname);
-                setSelectedClosetId(closet.closet_id);
-                fetchSettings_(closet.closet_id)
-                }}>
+              <div 
+                className="flex flex-row gap-2 items-center"
+                key={index}>
+                  <Form.Check
+                    type={'radio'}
+                    name="closet"
+                    checked={selectedCloset === index}
+                    onChange={(e) => {
+                      setSelectedCloset(index); 
+                      setSelectedClosetCookie(closet.cookie);
+                      setSelectedClosetName(closet.closetname);
+                      setSelectedClosetId(closet.closet_id);
+                      fetchSettings_(closet.closet_id)
+                    }}
+                  />
                   <Avatar className='cursor-pointer w-10 h-10' >
                   <AvatarImage src={closet.closet_img}  />
                   <AvatarFallback>CN</AvatarFallback>
-                </Avatar> 
+                  </Avatar> 
               </div>
             
             ))

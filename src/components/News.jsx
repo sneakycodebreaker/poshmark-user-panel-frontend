@@ -19,7 +19,6 @@ const News = () => {
   async function fetchCloset_(){
     let userId = localStorage.getItem('userId');
     let response = await fetchCloset(userId);
-    console.log(response?.closets);
     setConnectedCloset(response?.closets);
   }
 
@@ -29,25 +28,17 @@ const News = () => {
     if(selected === 'Share Back')
     {
       let response = await fetchShareBack(selectedClosetId,selectedClosetCookie);
-      console.log(response);
       setNewsResponse(response)
 
     }
     if(selected === 'Follow Back')
     {
       let response = await fetchFollowBack(selectedClosetId,selectedClosetCookie);
-      console.log(response);
       setNewsResponse(response)
     }
     setLoading(false)
   }
 
-  const handleClosetSelector = (index,uid,cookie) =>{
-    setNewsResponse([]);
-    setSelectedCloset(index)
-    setSelectedClosetCookie(cookie);
-    setSelectedClosetId(uid);
-  }
  useEffect(()=>{
   fetchCloset_();
  },[])
@@ -58,10 +49,19 @@ const News = () => {
             <div className="flex flex-row gap-3 ">     
             {
                 connectedCloset.map((closet,index)=>(
-                <div key={index} className={`${selectedCloset == index ? 'border-b-2 border-blue-500' : ''} pb-2 `} 
-                    onClick={()=>{handleClosetSelector(index, closet.closet_id, closet.cookie)}}
-                    
-                >
+                <div key={index} className='flex flex-row gap-2 items-center'>
+                  <Form.Check
+                    type={'radio'}
+                    name="closet"
+                    checked={selectedCloset === index}
+                    onChange={(e) => {
+                      setNewsResponse([]);
+                      setSelectedCloset(index)
+                      setSelectedClosetCookie(closet.cookie);
+                      setSelectedClosetId(closet.closet_id);
+                      setSelectedDropdown('');
+                    }}
+                  />
                     <Avatar className='cursor-pointer w-10 h-10' >
                     <AvatarImage src={closet.closet_img}  />
                     <AvatarFallback>CN</AvatarFallback>

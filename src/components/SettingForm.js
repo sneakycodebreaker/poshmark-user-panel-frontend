@@ -70,14 +70,15 @@ const SettingForm = () => {
     setLoadings(true);
     let userId = localStorage.getItem('userId');
     let response = await fetchSettings(userId,closetId);
-    setShareSettingString(response?.closets[0]?.share);
+    
 
     if(response?.closets.length > 0 && (response?.closets[0]?.share !== '' || response?.closets[0]?.follow !== ''))
     {
       setEnableServices(true);
-      if(response?.closets[0]?.share === 'self-share')
+      if(response?.closets[0]?.share.includes('self-share'))
       {
-        setSelfShare(true)
+        setSelfShare(true);
+        setShareSettingString(response?.closets[0]?.share);
       }
     }
     setLoadings(false);

@@ -20,12 +20,12 @@ const ShareLogs = () => {
     const logs = useSelector((state) => state.counter.value)
     const dispatch = useDispatch()
 
-   const [shareItemsStatus, setSharedItemStatus] = useState('Share');
+   const [shareItemsStatus, setSharedItemStatus] = useState('');
    const [socket, setSocket] = useState(null);
 
    const [connectedCloset,setConnectedCloset] = useState([]);
    const [selectedCloset, setSelectedCloset] = useState(null);
-   const [selectedLogs, setSelectedLogs] = useState(null);
+   const [selectedLogs, setSelectedLogs] = useState('Share');
 
    async function fetchCloset_(){
     let userId = localStorage.getItem('userId');
@@ -66,7 +66,7 @@ const ShareLogs = () => {
 
     <>
      {/* Connected Closet */}
-        <div className="py-2 px-4 flex flex-col gap-2 bg-white rounded mt-3 mb-2">
+        {/* <div className="py-2 px-4 flex flex-col gap-2 bg-white rounded mt-3 mb-2">
             <h4 className='font-semibold border-b pb-1'>Connected Closets</h4>
             <div className="flex flex-row gap-3 ">     
             {
@@ -81,16 +81,16 @@ const ShareLogs = () => {
                 ))
             }
             </div>
-        </div>
-        <div className='px-4 py-2 bg-white rounded-lg mb-2'>
+        </div> */}
+        <div className='px-4 py-2 bg-white rounded-lg mb-2 mt-3'>
 
           <div className='flex flex-row gap-3  border-b mb-3'>
             <div onClick={()=>{setSelectedLogs("Share")}} className={`${selectedLogs === 'Share' ? 'border-b-2 border-blue-500 pb-1' : ""} cursor-pointer`}>
                 <p className="text-lg">Share Logs</p>
             </div>
-            <div onClick={()=>{setSelectedLogs("Follow")}} className={`${selectedLogs === 'Follow' ? 'border-b-2 border-blue-500 pb-1' : ""} cursor-pointer`}>
+            {/* <div onClick={()=>{setSelectedLogs("Follow")}} className={`${selectedLogs === 'Follow' ? 'border-b-2 border-blue-500 pb-1' : ""} cursor-pointer`}>
                 <p className="text-lg">Follow Logs</p>
-            </div>
+            </div> */}
             
           </div>
           {

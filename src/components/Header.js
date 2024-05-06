@@ -1,6 +1,6 @@
 'use client'
 import { Button } from "@/components/ui/button";
-import { Home, ScrollText, Settings, User } from "lucide-react";
+import { Home, Newspaper, ScrollText, Settings, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -72,6 +72,7 @@ function Header() {
                     {/* {renderTabLink('/home', Home, 'Home', 'home')} */}
                     {renderTabLink('/account', User, 'Account', 'account')}
                     {renderTabLink('/logs', ScrollText, 'Logs', 'logs')}
+                    {renderTabLink('/news', Newspaper, 'News', 'news')}
                     {renderTabLink('/settings', Settings, 'Settings', 'settings')}
                 </div>
                 <SignedIn>

@@ -7,7 +7,8 @@ import { selfShare } from "@/services/startSelfShare";
 import { fetchCloset } from "@/services/fetchCloset";
 import io from "socket.io-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-
+import { fetchSettings } from "@/services/fetchSettings";
+import { addSettings } from "@/services/addSettings";
 const socket = io("http://173.230.151.165:3001");
 
 const SettingForm = () => {
@@ -35,8 +36,13 @@ const SettingForm = () => {
   const [connectedCloset,setConnectedCloset] = useState([]);
   const [selectedCloset, setSelectedCloset] = useState(null);
 
+  const [selectedClosetId,setSelectedClosetId] = useState('');
   const [selectedClosetCookie,setSelectedClosetCookie] = useState('');
   const [selectedClosetName,setSelectedClosetName] = useState('');
+
+  const [shareSettingString,setShareSettingString] = useState('');
+
+  const [loadings,setLoadings] = useState(false);
 
   async function fetchCloset_(){
     let userId = localStorage.getItem('userId');
@@ -60,6 +66,39 @@ const SettingForm = () => {
     }
   }
 
+  async function fetchSettings_(closetId){
+    setLoadings(true);
+    let userId = localStorage.getItem('userId');
+    let response = await fetchSettings(userId,closetId);
+    setShareSettingString(response?.closets[0]?.share);
+
+    if(response?.closets.length > 0 && (response?.closets[0]?.share !== '' || response?.closets[0]?.follow !== ''))
+    {
+      setEnableServices(true);
+      if(response?.closets[0]?.share === 'self-share')
+      {
+        setSelfShare(true)
+      }
+    }
+    setLoadings(false);
+  }
+
+
+    async function addSettings_(input,status){
+      let userId = localStorage.getItem('userId');
+      let setting = shareSettingString;
+      if(status === true)
+      {
+        setting = setting + (setting === '' ? '' : ",") + input;
+      }
+      if(status === false)
+      {
+        setting = setting.replace(input, '');
+      } 
+      setShareSettingString(setting);
+      addSettings(userId,selectedClosetId,setting,'')
+    }
+
   useEffect(() => {
     fetchCloset_()
   }, []);
@@ -75,7 +114,8 @@ const SettingForm = () => {
                 setSelectedCloset(index); 
                 setSelectedClosetCookie(closet.cookie);
                 setSelectedClosetName(closet.closetname);
-                
+                setSelectedClosetId(closet.closet_id);
+                fetchSettings_(closet.closet_id)
                 }}>
                   <Avatar className='cursor-pointer w-10 h-10' >
                   <AvatarImage src={closet.closet_img}  />
@@ -91,18 +131,28 @@ const SettingForm = () => {
 
       {/* Enable Services */}
       <div className="flex items-center my-3 ">
-        <div className="w-1/2">
-          <h6 className="text-lg" >Enable services</h6>
-        </div>
-        <div className="w-1/2 flex justify-end">
-          <Form.Check // prettier-ignore
-             type={'switch'}
-            checked={enableServices} 
-            onChange={(e) => {
-              setEnableServices(e.currentTarget.checked);
-            }}
-          />
-        </div>
+        {
+          loadings ? 
+          <p className="text-center">Fetching settings...</p>
+          :
+          <>
+            <div className="w-1/2">
+              <h6 className="text-lg" >Enable services</h6>
+            </div>
+            <div className="w-1/2 flex justify-end">
+              <Form.Check // prettier-ignore
+                disabled ={selectedCloset === null ? true : false}
+                type={'switch'}
+                checked={enableServices} 
+                onChange={(e) => {
+                  setEnableServices(e.currentTarget.checked);
+                }}
+              />
+            </div>
+          </>
+        }
+
+        
       </div>
 
       {/* Services */}
@@ -123,6 +173,7 @@ const SettingForm = () => {
                     onClick={(e) => {
                       setSelfShare(e.currentTarget.checked);
                       selfShareService(e.currentTarget.checked);
+                      addSettings_("self-share",e.currentTarget.checked);
                     }}
                   />
                   <span className="ml-2">Self share</span>

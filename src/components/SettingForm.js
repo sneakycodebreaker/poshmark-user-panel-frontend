@@ -19,7 +19,7 @@ const SettingForm = () => {
   const [communityShare, setCommunityShare] = useState(false);
   const [shareBack, setShareBack] = useState(false);
   const [enableShareBack, setEnableShareBack] = useState(false);
-  const [conditionalShareBack, setConditionalShareBack] = useState(false);
+  const [conditionalShareBack, setConditionalShareBack] = useState('');
   const [shareServiceString, setShareServiceString] = useState("");
 
   const [followCloset, setFollowCloset] = useState(false);
@@ -149,6 +149,7 @@ const SettingForm = () => {
               <h6 className="text-lg" >Enable services</h6>
             </div>
             <div className="w-1/2 flex justify-end">
+              
               <Form.Check // prettier-ignore
                 disabled ={selectedCloset === null ? true : false}
                 type={'switch'}
@@ -225,7 +226,7 @@ const SettingForm = () => {
                       setEnableShareBack(e.currentTarget.checked);
                       e.target.checked === "false"
                         ? ""
-                        : setConditionalShareBack(e.target.checked);
+                        : setConditionalShareBack('');
                     }}
                   />
                   <span className="ml-2">Share back</span>
@@ -235,24 +236,21 @@ const SettingForm = () => {
                     htmlFor="conditional-share-back-checkbox"
                     className="flex items-center ml-2"
                   >
-                    <Checkbox
-                      onClick={(e) => {
-                        setConditionalShareBack(
-                          e.target.getAttribute("aria-checked") === "false"
-                            ? true
-                            : false
-                        );
-                      }}
-                    />
-                    <Form.Check // prettier-ignore
-                      type={"checkbox"}
-                      defaultChecked={conditionalShareBack}
-                      onClick={(e) => {
-                        setConditionalShareBack(e.currentTarget.checked);
-                      }}
-                    />
                     <span className="ml-2">
-                      Share items back of each closet
+                      Share 
+                    </span>
+                      <Form.Control
+                      value={conditionalShareBack}
+                      size="sm"
+                      className="w-12 mx-2"
+                      type="text"
+                      onChange={(e)=>{
+                        setConditionalShareBack(e.target.value.replace(/[^1-5]/g, '').slice(0, 1))
+                      }}
+                
+                    />
+                   <span className="">
+                     items back of each closet
                     </span>
                   </label>
                 )}

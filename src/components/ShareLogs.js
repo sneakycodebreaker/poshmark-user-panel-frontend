@@ -15,9 +15,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addingLogs } from '@/utils/logsSlice';
 import { fetchCloset } from '@/services/fetchCloset';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import Form from 'react-bootstrap/Form';
 const ShareLogs = () => {
 
-    const logs = useSelector((state) => state.counter.value)
+    //-------------Image slow rendering ----------------------------
+    const logs = useSelector((state) => state.counter.value);
     const dispatch = useDispatch()
 
    const [shareItemsStatus, setSharedItemStatus] = useState('');
@@ -25,7 +27,7 @@ const ShareLogs = () => {
 
    const [connectedCloset,setConnectedCloset] = useState([]);
    const [selectedCloset, setSelectedCloset] = useState(null);
-   const [selectedLogs, setSelectedLogs] = useState('Share');
+   const [selectedDropdown, setSelectedDropdown] = useState('');
 
    async function fetchCloset_(){
     let userId = localStorage.getItem('userId');
@@ -84,22 +86,31 @@ const ShareLogs = () => {
         </div> */}
         <div className='px-4 py-2 bg-white rounded-lg mb-2 mt-3'>
 
-          <div className='flex flex-row gap-3  border-b mb-3'>
-            <div onClick={()=>{setSelectedLogs("Share")}} className={`${selectedLogs === 'Share' ? 'border-b-2 border-blue-500 pb-1' : ""} cursor-pointer`}>
-                <p className="text-lg">Share Logs</p>
+        <div className='flex flex-row justify-between items-center'>
+                <div>
+                  <p className='text-lg font-semibold'>{selectedDropdown}</p>
+                </div>
+                <div className='flex flex-row justify-end'>
+                  <Form.Select className='md:w-64' 
+                  value={selectedDropdown}
+                  onChange={(e)=>{
+                    setSelectedDropdown(e.target.value);
+                  }}
+                  >
+                    <option>Open to select</option>
+                    <option value="Share Back">Share Back</option>
+                    <option value="Follow Back">Follow Back</option>
+                    <option value="Like">Like</option>
+                  </Form.Select>
+                </div>
             </div>
-            {/* <div onClick={()=>{setSelectedLogs("Follow")}} className={`${selectedLogs === 'Follow' ? 'border-b-2 border-blue-500 pb-1' : ""} cursor-pointer`}>
-                <p className="text-lg">Follow Logs</p>
-            </div> */}
-            
-          </div>
           {
             logs?.length == 0 ?
             <p className="text-base font-semibold text-center">No logs</p>
             :
             <div className='grid grid-cols-5 gap-3'>
                 {
-                    logs.map((item,index)=>(
+                    logs?.slice().reverse().map((item,index)=>(
 
                     <div key={index} className='bg-white rounded border drop-shadow '>
                         <img src={item?.picture_url} 

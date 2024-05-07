@@ -24,6 +24,7 @@ const ConnectClosetForm = () => {
     const [closetCountry,setClosetCountry] = useState('');
     const [closetNameCheck,setClosetNameCheck] = useState('');
     const [closetPasswordCheck,setClosetPasswordCheck] = useState('');
+    const [closetCountryCheck,setClosetCountryCheck] = useState('')
 
     const [connectedCloset,setConnectedCloset] = useState([]);
     const [loading,setLoading] = useState(false);
@@ -46,9 +47,16 @@ const ConnectClosetForm = () => {
             setClosetPasswordCheck(true);
             return
         }
+        if(closetCountry === '')
+        {
+            setClosetCountryCheck(true);
+            return
+        }
+        //------Add country check ------------
         let dynamicCase ='closet_check'
         let closetCheckResponse = await checkCloset(dynamicCase,closetName,userId);
-       
+        console.log(closetCheckResponse);
+       //-------- Closet Check not returning same Json-------------------------
         if(closetCheckResponse.message === 'closet linked')
         {
             setLinkedClosetCheck(true);
@@ -169,20 +177,28 @@ const ConnectClosetForm = () => {
                 <Form.Label className='font-semibold mb-3'>Closet Country</Form.Label>
                 <div>
                     <Form.Check
+                    isInvalid={closetCountryCheck}
                     inline
                     label="us"
                     value={'us'}
                     name="country"
                     type={'radio'}
-                    onChange={(e)=>{setClosetCountry(e.target.value)}}
+                    onChange={(e)=>{
+                        setClosetCountry(e.target.value);
+                        closetCountryCheck ? setClosetCountryCheck(false) : ''
+                    }}
                     />
                     <Form.Check
+                      isInvalid={closetCountryCheck}
                         inline
                         label="ca"
                         value={'ca'}
                         name="country"
                         type={'radio'}
-                        onChange={(e)=>{setClosetCountry(e.target.value)}}
+                        onChange={(e)=>{
+                            setClosetCountry(e.target.value);
+                            closetCountryCheck ? setClosetCountryCheck(false) : ''
+                        }}
                     />
                 </div>
              

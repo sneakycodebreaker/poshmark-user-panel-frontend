@@ -150,11 +150,22 @@ const SettingForm = () => {
         setting_follow = setting_follow.replace(input, '');
       } 
 
+      setting_share =   replaceCommas(setting_share);
+      setting_follow =   replaceCommas(setting_follow);
+      
       setShareSettingString(setting_share);
       setFollowSettingString(setting_follow);
       addSettings(userId,selectedClosetId,setting_share,setting_follow);
 
     }
+
+    function replaceCommas(inputString) {
+      if (/^,+$/g.test(inputString)) {
+          return inputString.replace(/,/g, '');
+      } else {
+          return inputString;
+      }
+  }
 
   useEffect(() => {
     fetchCloset_()

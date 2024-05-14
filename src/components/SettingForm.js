@@ -92,6 +92,13 @@ const SettingForm = () => {
 
   async function fetchSettings_(closetId){
     setLoadings(true);
+
+    setEnableServices(false);
+    setSelfShare(false);
+    setShareBack(false);
+    setFollowBack(false);
+    setEnableFollowCloset(false)
+
     let userId = localStorage.getItem('userId');
     let response = await fetchSettings(userId,closetId);
     
@@ -345,9 +352,9 @@ const SettingForm = () => {
                     onClick={(e) => {
                       setFollowCloset(e.currentTarget.checked);
                       setEnableFollowCloset(e.currentTarget.checked);
-                      e.target.checked === false
-                        ? setFollowClosetCount("")
-                        : "";
+                      // e.target.checked === false
+                      //   ? setFollowClosetCount("")
+                      //   : "";
                     }}
                   />
                   <span className="ml-2">Follow closet</span>

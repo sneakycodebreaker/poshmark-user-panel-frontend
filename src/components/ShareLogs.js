@@ -31,6 +31,8 @@ const ShareLogs = () => {
    const [selectedCloset, setSelectedCloset] = useState(null);
    const [selectedDropdown, setSelectedDropdown] = useState('');
 
+   const [selectedClosetId,setSelectedClosetId] = useState('');
+
    async function fetchCloset_(){
     let userId = localStorage.getItem('userId');
     let response = await fetchCloset(userId);
@@ -71,7 +73,6 @@ const ShareLogs = () => {
             });
 
             socket.on('Shared Back', item => {
-                console.log(item);
                 if(item.uid === localStorage.getItem('userId'))
                 {
                     if(typeof(item.packet) === 'object')
@@ -89,12 +90,22 @@ const ShareLogs = () => {
 
     <>
      {/* Connected Closet */}
-        {/* <div className="py-2 px-4 flex flex-col gap-2 bg-white rounded mt-3 mb-2">
+        <div className="py-2 px-4 flex flex-col gap-2 bg-white rounded mt-3 mb-2">
             <h4 className='font-semibold border-b pb-1'>Connected Closets</h4>
             <div className="flex flex-row gap-3 ">     
             {
                 connectedCloset.map((closet,index)=>(
-                <div key={index} className={`${selectedCloset == index ? 'border-b-2 border-blue-500' : ''} pb-2 `} onClick={()=>{setSelectedCloset(index)}}>
+                <div key={index}  className="flex flex-row gap-2 items-center pb-2" onClick={()=>{setSelectedCloset(index)}}>
+                     <Form.Check
+                        type={'radio'}
+                        name="closet"
+                        checked={selectedCloset === index}
+                        onChange={(e) => {
+                        setSelectedCloset(index); 
+                        setSelectedClosetId(closet.closet_id);
+                        }}
+                    />
+                    
                     <Avatar className='cursor-pointer w-10 h-10' >
                     <AvatarImage src={closet.closet_img}  />
                     <AvatarFallback>CN</AvatarFallback>
@@ -104,15 +115,16 @@ const ShareLogs = () => {
                 ))
             }
             </div>
-        </div> */}
+        </div>
         <div className='px-4 py-2 bg-white rounded-lg mb-2 mt-3'>
 
-        <div className='flex flex-row justify-between items-center'>
+        <div className='flex flex-row justify-between items-center mb-2'>
                 <div>
-                  <p className='text-lg font-semibold'>{selectedDropdown}</p>
+                  <p className='text-lg font-semibold' onClick={()=>{console.log(selectedClosetId);}}>{selectedDropdown}</p>
                 </div>
                 <div className='flex flex-row justify-end'>
                   <Form.Select className='md:w-64' 
+                  disabled={selectedCloset === null? true : false}
                   value={selectedDropdown}
                   onChange={(e)=>{
                     setSelectedDropdown(e.target.value);
@@ -137,18 +149,27 @@ const ShareLogs = () => {
                         {
                             self_share_logs?.slice().reverse().map((item,index)=>(
 
-                            <div key={index} className='bg-white rounded border drop-shadow '>
-                                <img src={item?.picture_url} 
-                                className='w-56 h-44 rounded-t'/>
-                                <div className='flex flex-col p-2 text-wrap gap-1'>
-                                    <span className='line-clamp-1 font-serif'>{item?.title}</span>
-                                
-                                    <div className='flex flex-col'>
-                                        <span className='font-semibold '>${item?.price}</span>
-                                        <span className='text-sm font-semibold '>Size: <span className='font-normal'>{item?.size}</span></span>
-                                    </div>             
+                            <>
+                            {
+                                selectedClosetId ===  item.closetId?
+                                <div key={index} className='bg-white rounded border drop-shadow '>
+                                    <img src={item?.picture_url} 
+                                    className='w-56 h-44 rounded-t'/>
+                                    <div className='flex flex-col p-2 text-wrap gap-1'>
+                                        <span className='line-clamp-1 font-serif'>{item?.title}</span>
+                                    
+                                        <div className='flex flex-col'>
+                                            <span className='font-semibold '>${item?.price}</span>
+                                            <span className='text-sm font-semibold '>Size: <span className='font-normal'>{item?.size}</span></span>
+                                        </div>             
+                                    </div>
                                 </div>
-                            </div>
+                                :
+                                ''
+                            }
+                            </>
+
+                            
                             ))
                         }        
                     </div>
@@ -166,14 +187,21 @@ const ShareLogs = () => {
                     <div className='grid grid-cols-5 gap-3'>
                         {
                             follow_back_logs?.slice().reverse().map((item,index)=>(
-
-                            <div key={index} className='bg-white rounded border drop-shadow '>
-                                <img src={item?.picture} 
-                                className='w-56 h-44 rounded-t'/>
-                                <div className='flex flex-col p-2 text-wrap gap-1'>
-                                    <span className='line-clamp-1 font-serif'>{item?.username}</span>           
-                                </div>
-                            </div>
+                             <>
+                                {
+                                    selectedClosetId == item.uid_ ?
+                                    <div key={index} className='bg-white rounded border drop-shadow '>
+                                        <img src={item?.picture} 
+                                        className='w-56 h-44 rounded-t'/>
+                                        <div className='flex flex-col p-2 text-wrap gap-1'>
+                                            <span className='line-clamp-1 font-serif'>{item?.username}</span>           
+                                        </div>
+                                    </div>
+                                    :
+                                    ''
+                                }
+                             </>
+                          
                             ))
                         }        
                     </div>
@@ -191,19 +219,25 @@ const ShareLogs = () => {
                     <div className='grid grid-cols-5 gap-3'>
                         {
                             share_back_logs?.slice().reverse().map((item,index)=>(
-
-                            <div key={index} className='bg-white rounded border drop-shadow '>
-                                <img src={item?.picture_url} 
-                                className='w-56 h-44 rounded-t'/>
-                                <div className='flex flex-col p-2 text-wrap gap-1'>
-                                    <span className='line-clamp-1 font-serif'>{item?.title}</span>
-                                
-                                    <div className='flex flex-col'>
-                                        <span className='font-semibold '>${item?.price}</span>
-                                        <span className='text-sm font-semibold '>Size: <span className='font-normal'>{item?.size}</span></span>
-                                    </div>             
+                            <>
+                            {
+                                selectedClosetId == item.closetId ?
+                                <div key={index} className='bg-white rounded border drop-shadow '>
+                                    <img src={item?.picture_url} 
+                                    className='w-56 h-44 rounded-t'/>
+                                    <div className='flex flex-col p-2 text-wrap gap-1'>
+                                        <span className='line-clamp-1 font-serif'>{item?.title}</span>
+                                    
+                                        <div className='flex flex-col'>
+                                            <span className='font-semibold '>${item?.price}</span>
+                                            <span className='text-sm font-semibold '>Size: <span className='font-normal'>{item?.size}</span></span>
+                                        </div>             
+                                    </div>
                                 </div>
-                            </div>
+                                :
+                                ''
+                            }
+                            </>                     
                             ))
                         }        
                     </div>

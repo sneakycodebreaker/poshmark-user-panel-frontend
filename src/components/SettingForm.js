@@ -9,6 +9,8 @@ import io from "socket.io-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { fetchSettings } from "@/services/fetchSettings";
 import { addSettings } from "@/services/addSettings";
+import { followBack_ } from "@/services/followback";
+import { shareBack_ } from "@/services/shareback";
 const socket = io("http://173.230.151.165:3001");
 
 const SettingForm = () => {
@@ -19,7 +21,7 @@ const SettingForm = () => {
   const [communityShare, setCommunityShare] = useState(false);
   const [shareBack, setShareBack] = useState(false);
   const [enableShareBack, setEnableShareBack] = useState(false);
-  const [conditionalShareBack, setConditionalShareBack] = useState('');
+  const [conditionalShareBack, setConditionalShareBack] = useState(2);
   const [shareServiceString, setShareServiceString] = useState("");
 
   const [followCloset, setFollowCloset] = useState(false);
@@ -41,6 +43,7 @@ const SettingForm = () => {
   const [selectedClosetName,setSelectedClosetName] = useState('');
 
   const [shareSettingString,setShareSettingString] = useState('');
+  const [followSettingString,setFollowSettingString] = useState('');
 
   const [loadings,setLoadings] = useState(false);
 
@@ -49,22 +52,43 @@ const SettingForm = () => {
     let response = await fetchCloset(userId);
     setConnectedCloset(response?.closets);
   }
+
   function selfShareService(status) {
+    let userId = localStorage.getItem('userId');
     let cookie = selectedClosetCookie;
     let username = selectedClosetName;
-
     if (status) {
-      localStorage.setItem("closetServices", "selfShare");
-      setShareServiceString((prevValue) => prevValue + "selfShare");
-      selfShare(cookie, username);
+      selfShare(userId,selectedClosetId,cookie, username);
       return;
     } else {
-      localStorage.removeItem("closetServices");
-      setShareServiceString((prevValue) => prevValue.replace("selfShare", ""));
-      socket.emit("stopProcess");
-      setShareServiceString(prevValue => prevValue.replace(/selfShare(,|$)/g, ''));
+      socket.emit("stopProcessSelfShare",userId,selectedClosetId);
     }
   }
+
+  function followBackService(status) {
+    let userId = localStorage.getItem('userId');
+    let cookie = selectedClosetCookie;
+
+    if (status) {
+      followBack_(userId,selectedClosetId,cookie);
+      return;
+    } else {
+      socket.emit("stopProcessFollowBack",userId,selectedClosetId);
+    }
+  }
+
+  function shareBackService(status) {
+    let userId = localStorage.getItem('userId');
+    let cookie = selectedClosetCookie;
+
+    if (status) {
+      shareBack_(userId,selectedClosetId,cookie);
+      return;
+    } else {
+      socket.emit("stopProcessShareBack",userId,selectedClosetId);
+    }
+  }
+
 
   async function fetchSettings_(closetId){
     setLoadings(true);
@@ -80,6 +104,16 @@ const SettingForm = () => {
         setSelfShare(true);
         setShareSettingString(response?.closets[0]?.share);
       }
+      if(response?.closets[0]?.share.includes('share-back'))
+      {
+        setShareBack(true);
+        setShareSettingString(response?.closets[0]?.share);
+      }
+      if(response?.closets[0]?.follow.includes('follow-back'))
+      {
+        setFollowBack(true);
+        setFollowSettingString(response?.closets[0]?.follow);
+      }
     }
     setLoadings(false);
   }
@@ -87,17 +121,39 @@ const SettingForm = () => {
 
     async function addSettings_(input,status){
       let userId = localStorage.getItem('userId');
-      let setting = shareSettingString;
-      if(status === true)
+      let setting_share = shareSettingString;
+      let setting_follow = followSettingString;
+      if(status === true && input.includes("self-share") === true)
       {
-        setting = setting + (setting === '' ? '' : ",") + input;
+        setting_share = setting_share + (setting_share === '' ? '' : ",") + input;
       }
-      if(status === false)
+      if(status === false  && input.includes("self-share") === true)
       {
-        setting = setting.replace(input, '');
+        setting_share = setting_share.replace(input, '');
       } 
-      setShareSettingString(setting);
-      addSettings(userId,selectedClosetId,setting,'')
+
+      if(status === true && input.includes("share-back") === true)
+      {
+        setting_share = setting_share + (setting_share === '' ? '' : ",") + input;
+      }
+      if(status === false  && input.includes("share-back") === true)
+      {
+        setting_share = setting_share.replace(input, '');
+      } 
+
+      if(status === true && input.includes("follow-back") === true)
+      {
+        setting_follow = setting_follow + (setting_follow === '' ? '' : ",") + input;
+      }
+      if(status === false  && input.includes("follow-back") === true)
+      {
+        setting_follow = setting_follow.replace(input, '');
+      } 
+
+      setShareSettingString(setting_share);
+      setFollowSettingString(setting_follow);
+      addSettings(userId,selectedClosetId,setting_share,setting_follow);
+
     }
 
   useEffect(() => {
@@ -123,7 +179,8 @@ const SettingForm = () => {
                       setSelectedClosetCookie(closet.cookie);
                       setSelectedClosetName(closet.closetname);
                       setSelectedClosetId(closet.closet_id);
-                      fetchSettings_(closet.closet_id)
+                      fetchSettings_(closet.closet_id);
+                      setEnableServices(false)
                     }}
                   />
                   <Avatar className='cursor-pointer w-10 h-10' >
@@ -156,6 +213,9 @@ const SettingForm = () => {
                 checked={enableServices} 
                 onChange={(e) => {
                   setEnableServices(e.currentTarget.checked);
+                  selfShare_ === true ? [selfShareService(false),addSettings_('self-share',false)] : '';
+                  shareBack === true ? [shareBackService(false),addSettings_('share-back',false)] : '';
+                  followBack === true ? [followBackService(false),addSettings_('follow-back',false)] : '';               
                 }}
               />
             </div>
@@ -222,6 +282,8 @@ const SettingForm = () => {
                     type={"checkbox"}
                     defaultChecked={shareBack}
                     onClick={(e) => {
+                      addSettings_("share-back",e.currentTarget.checked);
+                      shareBackService(e.target.checked);       
                       setShareBack(e.currentTarget.checked);
                       setEnableShareBack(e.currentTarget.checked);
                       e.target.checked === "false"
@@ -240,9 +302,10 @@ const SettingForm = () => {
                       Share 
                     </span>
                       <Form.Control
-                      value={conditionalShareBack}
+                      value={2}
+                      disabled={true}
                       size="sm"
-                      className="w-12 mx-2"
+                      className="w-12 mx-2 flex justify-items-center items-center"
                       type="text"
                       onChange={(e)=>{
                         setConditionalShareBack(e.target.value.replace(/[^1-5]/g, '').slice(0, 1))
@@ -306,11 +369,13 @@ const SettingForm = () => {
                   htmlFor="follow-back-checkbox"
                   className="flex items-center"
                 >
-                  <Form.Check // prettier-ignore
+                  <Form.Check
                     type={"checkbox"}
                     defaultChecked={followBack}
                     onClick={(e) => {
                       setFollowBack(e.currentTarget.checked);
+                      addSettings_('follow-back',e.currentTarget.checked);
+                      followBackService(e.currentTarget.checked);
                     }}
                   />
                   <span className="ml-2">Follow back</span>

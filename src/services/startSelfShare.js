@@ -1,10 +1,12 @@
 import axios from 'axios';
 
-export async function selfShare(closetCookies,closetUsername){
+export async function selfShare(uid,closetId,closetCookies,closetUsername){
  
     try {
 
         const postData = {
+            uid:uid,
+            closetId:closetId,
             closet: closetUsername,
             cookies: closetCookies
           };

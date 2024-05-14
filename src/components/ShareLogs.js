@@ -12,14 +12,16 @@ import {
 } from "@/components/ui/table"
 import Image from 'next/image';
 import { useDispatch, useSelector } from 'react-redux';
-import { addingLogs } from '@/utils/logsSlice';
+import {addingSelfShareLogs,addingFollowBackLogs,addingShareBackLogs} from '@/utils/logsSlice';
 import { fetchCloset } from '@/services/fetchCloset';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Form from 'react-bootstrap/Form';
 const ShareLogs = () => {
 
     //-------------Image slow rendering ----------------------------
-    const logs = useSelector((state) => state.counter.value);
+    const self_share_logs = useSelector((state) => state.counter.self_share_value);
+    const follow_back_logs = useSelector((state) => state.counter.follow_back_value);
+    const share_back_logs = useSelector((state) => state.counter.share_back_value);
     const dispatch = useDispatch()
 
    const [shareItemsStatus, setSharedItemStatus] = useState('');
@@ -35,10 +37,10 @@ const ShareLogs = () => {
     setConnectedCloset(response?.closets);
   }
 
-   useEffect(() => {
-        fetchCloset_();
+   useEffect(() => {  
        const newSocket = io("http://173.230.151.165:3001");
        setSocket(newSocket);
+       fetchCloset_();
        return () => {
            newSocket.disconnect();
        };
@@ -47,18 +49,37 @@ const ShareLogs = () => {
    useEffect(() => {
        
        if (socket) {
-           socket.on('itemShared', item => {
-                console.log('itemShared', item);
-                if(typeof(item) === 'string') 
-                {
-                    setSharedItemStatus(item)
-                }
-                if(typeof(item) === 'object')
-                {
-                    dispatch(addingLogs(item));
-                }
+
+           socket.on('Followed Back', item => {
+                if(item.uid === localStorage.getItem('userId'))
+                {   
+                    if(typeof(item.packet) === 'object')
+                    {
+                        dispatch(addingFollowBackLogs(item.packet));
+                    }           
+                } 
               
            });
+           socket.on('Self Share', item => {
+                if(item.uid === localStorage.getItem('userId'))
+                {
+                    if(typeof(item.packet) === 'object')
+                    {
+                        dispatch(addingSelfShareLogs(item.packet));
+                    }           
+                }              
+            });
+
+            socket.on('Shared Back', item => {
+                console.log(item);
+                if(item.uid === localStorage.getItem('userId'))
+                {
+                    if(typeof(item.packet) === 'object')
+                    {
+                        dispatch(addingShareBackLogs(item.packet));
+                    }           
+                }              
+            });
        }
    }, [socket]);
 
@@ -98,36 +119,99 @@ const ShareLogs = () => {
                   }}
                   >
                     <option>Open to select</option>
+                    <option value="Self Share">Self Share</option>
                     <option value="Share Back">Share Back</option>
                     <option value="Follow Back">Follow Back</option>
-                    <option value="Like">Like</option>
+                    {/* <option value="Like">Like</option> */}
                   </Form.Select>
                 </div>
             </div>
-          {
-            logs?.length == 0 ?
-            <p className="text-base font-semibold text-center">No logs</p>
-            :
-            <div className='grid grid-cols-5 gap-3'>
-                {
-                    logs?.slice().reverse().map((item,index)=>(
+            {
+                selectedDropdown  === 'Self Share' &&
+                <>
+                 {
+                    self_share_logs?.length == 0 ?
+                    <p className="text-base font-semibold text-center">No logs</p>
+                    :
+                    <div className='grid grid-cols-5 gap-3'>
+                        {
+                            self_share_logs?.slice().reverse().map((item,index)=>(
 
-                    <div key={index} className='bg-white rounded border drop-shadow '>
-                        <img src={item?.picture_url} 
-                        className='w-56 h-44 rounded-t'/>
-                        <div className='flex flex-col p-2 text-wrap gap-1'>
-                            <span className='line-clamp-1 font-serif'>{item?.title}</span>
-                          
-                            <div className='flex flex-col'>
-                                <span className='font-semibold '>${item?.price}</span>
-                                <span className='text-sm font-semibold '>Size: <span className='font-normal'>{item?.size}</span></span>
-                            </div>             
-                        </div>
+                            <div key={index} className='bg-white rounded border drop-shadow '>
+                                <img src={item?.picture_url} 
+                                className='w-56 h-44 rounded-t'/>
+                                <div className='flex flex-col p-2 text-wrap gap-1'>
+                                    <span className='line-clamp-1 font-serif'>{item?.title}</span>
+                                
+                                    <div className='flex flex-col'>
+                                        <span className='font-semibold '>${item?.price}</span>
+                                        <span className='text-sm font-semibold '>Size: <span className='font-normal'>{item?.size}</span></span>
+                                    </div>             
+                                </div>
+                            </div>
+                            ))
+                        }        
                     </div>
-                    ))
-                }        
-            </div>
-          }
+                }
+                </>
+            }
+
+            {
+                selectedDropdown  === 'Follow Back' &&
+                <>
+                 {
+                    follow_back_logs?.length == 0 ?
+                    <p className="text-base font-semibold text-center">No logs</p>
+                    :
+                    <div className='grid grid-cols-5 gap-3'>
+                        {
+                            follow_back_logs?.slice().reverse().map((item,index)=>(
+
+                            <div key={index} className='bg-white rounded border drop-shadow '>
+                                <img src={item?.picture} 
+                                className='w-56 h-44 rounded-t'/>
+                                <div className='flex flex-col p-2 text-wrap gap-1'>
+                                    <span className='line-clamp-1 font-serif'>{item?.username}</span>           
+                                </div>
+                            </div>
+                            ))
+                        }        
+                    </div>
+                }
+                </>
+            }
+
+            {
+                selectedDropdown  === 'Share Back' &&
+                <>
+                 {
+                    share_back_logs?.length == 0 ?
+                    <p className="text-base font-semibold text-center">No logs</p>
+                    :
+                    <div className='grid grid-cols-5 gap-3'>
+                        {
+                            share_back_logs?.slice().reverse().map((item,index)=>(
+
+                            <div key={index} className='bg-white rounded border drop-shadow '>
+                                <img src={item?.picture_url} 
+                                className='w-56 h-44 rounded-t'/>
+                                <div className='flex flex-col p-2 text-wrap gap-1'>
+                                    <span className='line-clamp-1 font-serif'>{item?.title}</span>
+                                
+                                    <div className='flex flex-col'>
+                                        <span className='font-semibold '>${item?.price}</span>
+                                        <span className='text-sm font-semibold '>Size: <span className='font-normal'>{item?.size}</span></span>
+                                    </div>             
+                                </div>
+                            </div>
+                            ))
+                        }        
+                    </div>
+                }
+                </>
+            }
+
+         
         </div>
     </>
     

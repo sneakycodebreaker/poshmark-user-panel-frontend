@@ -162,6 +162,7 @@ const ShareLogs = () => {
                         onChange={(e) => {
                         setSelectedCloset(index); 
                         setSelectedClosetId(closet.closet_id);
+                        setSelectedDropdown('')
                         }}
                     />
                     

@@ -16,13 +16,14 @@ import {addingSelfShareLogs,addingFollowBackLogs,addingShareBackLogs} from '@/ut
 import { fetchCloset } from '@/services/fetchCloset';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Form from 'react-bootstrap/Form';
+import { fetchLogs } from '@/services/fetchLogs';
 const ShareLogs = () => {
 
     //-------------Image slow rendering ----------------------------
     const self_share_logs = useSelector((state) => state.counter.self_share_value);
     const follow_back_logs = useSelector((state) => state.counter.follow_back_value);
     const share_back_logs = useSelector((state) => state.counter.share_back_value);
-    const dispatch = useDispatch()
+    const dispatch = useDispatch();
 
    const [shareItemsStatus, setSharedItemStatus] = useState('');
    const [socket, setSocket] = useState(null);
@@ -33,11 +34,35 @@ const ShareLogs = () => {
 
    const [selectedClosetId,setSelectedClosetId] = useState('');
 
+   const [selfShareLogs,setSelfShareLogs] = useState([]);
+   const [followBackLogs,setFollowBackLogs] = useState([]);
+   const [shareBackLogs,setShareBackLogs] = useState([]);
+
+   const [loadings,setLoadings] = useState(true);
+
    async function fetchCloset_(){
     let userId = localStorage.getItem('userId');
     let response = await fetchCloset(userId);
     setConnectedCloset(response?.closets);
   }
+
+   async function fetchLogs_(type){
+    setLoadings(true);
+    let userId = localStorage.getItem('userId');
+    let response =  await fetchLogs(userId,selectedClosetId,type);
+    console.log(response);
+    if(type == 'Self Share')
+    {
+        setSelfShareLogs(response.logs);
+    }
+    if(type == 'Share Back'){
+        setShareBackLogs(response.logs)
+    }
+    if(type == 'Follow Back'){
+        setFollowBackLogs(response.logs)
+    }
+    setLoadings(false);
+   }
 
    useEffect(() => {  
        const newSocket = io("http://173.230.151.165:3001");
@@ -63,6 +88,7 @@ const ShareLogs = () => {
               
            });
            socket.on('Self Share', item => {
+            console.log(item);
                 if(item.uid === localStorage.getItem('userId'))
                 {
                     if(typeof(item.packet) === 'object')
@@ -84,7 +110,40 @@ const ShareLogs = () => {
        }
    }, [socket]);
 
- 
+    useEffect(() => {
+        if (self_share_logs !== undefined && loadings === false ) {
+            setSelfShareLogs(prevArray => {
+                // const existingIds = new Set(prevArray.map(item => item.userId));
+                // const filteredNewArray = self_share_logs.filter(item => !existingIds.has(item.userId));
+                // console.log('filteredNewArray :',filteredNewArray);
+                return [...prevArray, ...self_share_logs];
+            });
+        }
+    }, [self_share_logs]);
+
+    useEffect(() => {
+        if (follow_back_logs !== undefined && loadings === false ) {
+            console.log('follow_back_logs ',follow_back_logs);
+            setFollowBackLogs(prevArray => {
+                // const existingIds = new Set(prevArray.map(item => item.userId));
+                // const filteredNewArray = follow_back_logs.filter(item => !existingIds.has(item.userId));
+                // console.log('filteredNewArray :',filteredNewArray);
+                return [...prevArray, ...follow_back_logs];
+            });
+        }
+    }, [follow_back_logs]);
+
+
+    useEffect(() => {
+        if (share_back_logs !== undefined && loadings === false ) {
+            setShareBackLogs(prevArray => {
+                // const existingIds = new Set(prevArray.map(item => item.userId));
+                // const filteredNewArray = share_back_logs.filter(item => !existingIds.has(item.userId));
+                return [...prevArray, ...share_back_logs];
+            });
+        }
+    }, [share_back_logs]);
+
 
    return (
 
@@ -120,14 +179,15 @@ const ShareLogs = () => {
 
         <div className='flex flex-row justify-between items-center mb-2'>
                 <div>
-                  <p className='text-lg font-semibold' onClick={()=>{console.log(selectedClosetId);}}>{selectedDropdown}</p>
+                  <p className='text-lg font-semibold' onClick={()=>{console.log(selfShareLogs);}}>{selectedDropdown}</p>
                 </div>
                 <div className='flex flex-row justify-end'>
                   <Form.Select className='md:w-64' 
                   disabled={selectedCloset === null? true : false}
                   value={selectedDropdown}
-                  onChange={(e)=>{
+                  onChange={(e)=>{            
                     setSelectedDropdown(e.target.value);
+                    fetchLogs_(e.target.value);
                   }}
                   >
                     <option>Open to select</option>
@@ -142,16 +202,16 @@ const ShareLogs = () => {
                 selectedDropdown  === 'Self Share' &&
                 <>
                  {
-                    self_share_logs?.length == 0 ?
-                    <p className="text-base font-semibold text-center">No logs</p>
+                    selfShareLogs?.length == 0 ?
+                    <p className="text-base font-semibold text-center">{loadings ? "fetching logs ..." : "No logs"}</p>
                     :
                     <div className='grid grid-cols-5 gap-3'>
                         {
-                            self_share_logs?.slice().reverse().map((item,index)=>(
+                            selfShareLogs?.slice().reverse().map((item,index)=>(
 
                             <>
                             {
-                                selectedClosetId ===  item.closetId?
+                                selectedClosetId ===  item.closet_id?
                                 <div key={index} className='bg-white rounded border drop-shadow '>
                                     <img src={item?.picture_url} 
                                     className='w-56 h-44 rounded-t'/>
@@ -181,15 +241,15 @@ const ShareLogs = () => {
                 selectedDropdown  === 'Follow Back' &&
                 <>
                  {
-                    follow_back_logs?.length == 0 ?
-                    <p className="text-base font-semibold text-center">No logs</p>
+                    followBackLogs?.length == 0 ?
+                    <p className="text-base font-semibold text-center">{loadings ? "fetching logs ..." : "No logs"}</p>
                     :
                     <div className='grid grid-cols-5 gap-3'>
                         {
-                            follow_back_logs?.slice().reverse().map((item,index)=>(
+                            followBackLogs?.slice().reverse().map((item,index)=>(
                              <>
                                 {
-                                    selectedClosetId == item.uid_ ?
+                                    selectedClosetId == item.closet_id ?
                                     <div key={index} className='bg-white rounded border drop-shadow '>
                                         <img src={item?.picture} 
                                         className='w-56 h-44 rounded-t'/>
@@ -213,15 +273,15 @@ const ShareLogs = () => {
                 selectedDropdown  === 'Share Back' &&
                 <>
                  {
-                    share_back_logs?.length == 0 ?
-                    <p className="text-base font-semibold text-center">No logs</p>
+                    shareBackLogs?.length == 0 ?
+                    <p className="text-base font-semibold text-center">{loadings ? "fetching logs ..." : "No logs"}</p>
                     :
                     <div className='grid grid-cols-5 gap-3'>
                         {
-                            share_back_logs?.slice().reverse().map((item,index)=>(
+                            shareBackLogs?.slice().reverse().map((item,index)=>(
                             <>
                             {
-                                selectedClosetId == item.closetId ?
+                                selectedClosetId == item.closet_id ?
                                 <div key={index} className='bg-white rounded border drop-shadow '>
                                     <img src={item?.picture_url} 
                                     className='w-56 h-44 rounded-t'/>

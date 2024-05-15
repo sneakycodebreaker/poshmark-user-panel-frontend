@@ -114,11 +114,13 @@ const SettingForm = () => {
       if(response?.closets[0]?.share.includes('share-back'))
       {
         setShareBack(true);
+        setEnableShareBack(true)
         setShareSettingString(response?.closets[0]?.share);
       }
       if(response?.closets[0]?.follow.includes('follow-back'))
       {
         setFollowBack(true);
+       
         setFollowSettingString(response?.closets[0]?.follow);
       }
     }

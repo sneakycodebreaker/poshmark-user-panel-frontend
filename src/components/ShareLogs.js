@@ -37,8 +37,10 @@ const ShareLogs = () => {
    const [selfShareLogs,setSelfShareLogs] = useState([]);
    const [followBackLogs,setFollowBackLogs] = useState([]);
    const [shareBackLogs,setShareBackLogs] = useState([]);
+   const [allLogs,setAllLogs] = useState([]);
 
-   const [loadings,setLoadings] = useState(true);
+   const [loadings,setLoadings] = useState(false);
+   const [dropDownDisabled,setDropDownDisabled] = useState(true);
 
    async function fetchCloset_(){
     let userId = localStorage.getItem('userId');
@@ -46,22 +48,26 @@ const ShareLogs = () => {
     setConnectedCloset(response?.closets);
   }
 
-   async function fetchLogs_(type){
+   async function fetchLogs_(closet_id,index){
+    setDropDownDisabled(true)
     setLoadings(true);
     let userId = localStorage.getItem('userId');
-    let response =  await fetchLogs(userId,selectedClosetId,type);
-    console.log(response);
-    if(type == 'Self Share')
-    {
-        setSelfShareLogs(response.logs);
-    }
-    if(type == 'Share Back'){
-        setShareBackLogs(response.logs)
-    }
-    if(type == 'Follow Back'){
-        setFollowBackLogs(response.logs)
-    }
+    let response =  await fetchLogs(userId,closet_id,'Self Share');
+    setAllLogs(prevArray => { return [...prevArray, ...response.logs]});
+    setSelfShareLogs(response.logs);
+
+    response =  await fetchLogs(userId,closet_id,'Share Back');
+    setAllLogs(prevArray => { return [...prevArray, ...response.logs]});
+    setShareBackLogs(response.logs);
+
+    response =  await fetchLogs(userId,closet_id,'Follow Back');
+    setAllLogs(prevArray => { return [...prevArray, ...response.logs]});
+    setFollowBackLogs(response.logs);
+
+    setSelectedCloset(index); 
+    setSelectedDropdown("All")
     setLoadings(false);
+    setDropDownDisabled(false)
    }
 
    useEffect(() => {  
@@ -78,6 +84,13 @@ const ShareLogs = () => {
        if (socket) {
 
            socket.on('Followed Back', item => {
+                let now = new Date();
+                let year = now.getFullYear();
+                let month = String(now.getMonth() + 1).padStart(2, '0'); 
+                let day = String(now.getDate()).padStart(2, '0');
+                let formattedDate = `${year}-${month}-${day}`;
+                let key = "followed_at";
+                item.packet[key] = formattedDate;
                 if(item.uid === localStorage.getItem('userId'))
                 {   
                     if(typeof(item.packet) === 'object')
@@ -88,7 +101,14 @@ const ShareLogs = () => {
               
            });
            socket.on('Self Share', item => {
-            console.log(item);
+            
+                let now = new Date();
+                let year = now.getFullYear();
+                let month = String(now.getMonth() + 1).padStart(2, '0'); 
+                let day = String(now.getDate()).padStart(2, '0');
+                let formattedDate = `${year}-${month}-${day}`;
+                let key = "shared_at";
+                item.packet[key] = formattedDate;
                 if(item.uid === localStorage.getItem('userId'))
                 {
                     if(typeof(item.packet) === 'object')
@@ -99,6 +119,13 @@ const ShareLogs = () => {
             });
 
             socket.on('Shared Back', item => {
+                let now = new Date();
+                let year = now.getFullYear();
+                let month = String(now.getMonth() + 1).padStart(2, '0'); 
+                let day = String(now.getDate()).padStart(2, '0');
+                let formattedDate = `${year}-${month}-${day}`;
+                let key = "shared_at";
+                item.packet[key] = formattedDate;
                 if(item.uid === localStorage.getItem('userId'))
                 {
                     if(typeof(item.packet) === 'object')
@@ -145,6 +172,7 @@ const ShareLogs = () => {
     }, [share_back_logs]);
 
 
+
    return (
 
     <>
@@ -160,9 +188,9 @@ const ShareLogs = () => {
                         name="closet"
                         checked={selectedCloset === index}
                         onChange={(e) => {
-                        setSelectedCloset(index); 
                         setSelectedClosetId(closet.closet_id);
-                        setSelectedDropdown('')
+                        setSelectedDropdown('');
+                        fetchLogs_(closet.closet_id ,index)
                         }}
                     />
                     
@@ -180,18 +208,18 @@ const ShareLogs = () => {
 
         <div className='flex flex-row justify-between items-center mb-2'>
                 <div>
-                  <p className='text-lg font-semibold' onClick={()=>{console.log(selfShareLogs);}}>{selectedDropdown}</p>
+                  <p className='text-lg font-semibold'>{loadings ? "fetching logs..." :selectedDropdown}</p>
                 </div>
                 <div className='flex flex-row justify-end'>
                   <Form.Select className='md:w-64' 
-                  disabled={selectedCloset === null? true : false}
+                  disabled={dropDownDisabled}
                   value={selectedDropdown}
                   onChange={(e)=>{            
                     setSelectedDropdown(e.target.value);
-                    fetchLogs_(e.target.value);
                   }}
                   >
                     <option>Open to select</option>
+                    <option value="All">All</option>
                     <option value="Self Share">Self Share</option>
                     <option value="Share Back">Share Back</option>
                     <option value="Follow Back">Follow Back</option>
@@ -199,6 +227,85 @@ const ShareLogs = () => {
                   </Form.Select>
                 </div>
             </div>
+            {
+                selectedDropdown  === 'All' &&
+                <>
+                 {
+                    allLogs?.length == 0 ?
+                    <p className="text-base font-semibold text-center">{loadings ? "fetching logs ..." : "No logs"}</p>
+                    :
+                    <div className='grid grid-cols-5 gap-3'>
+                        {
+                            allLogs?.slice().reverse().map((item,index)=>(
+                            <>
+                            {
+                                selectedClosetId ===  item.closet_id?
+                                <div key={index} className='bg-white rounded border drop-shadow'>
+                                    {
+                                        item?.picture_url && 
+                                        <img src={item?.picture_url} 
+                                        className='w-56 h-44 rounded-t'/>
+                                    }
+                                    {
+                                        item?.picture && 
+                                        <img src={item?.picture} 
+                                        className='w-56 h-44 rounded-t'/>
+                                    }
+                                    <div className='flex flex-col p-2 text-wrap gap-1'>
+                                        {
+                                            item?.username && 
+                                            <span className='line-clamp-1 font-serif'>{item?.username}</span>     
+                                        }
+                                        {
+                                            item?.title && 
+                                            <span className='line-clamp-1 font-serif'>{item?.title}</span>  
+                                        }
+
+                                      
+                                            <div className='flex flex-col'>
+                                                {
+                                                    item?.price && 
+                                                    <div className='flex flex-row items-center justify-between'>
+                                                        <span className='font-semibold '>${item?.price}</span>
+                                                        <span className='text-sm font-semibold '>Size: <span className='font-normal'>{item?.size}</span></span>
+                                                    </div>
+                                                }
+                                                {
+                                                    item?.shared_at &&
+                                                    <div className='pt-1'>
+                                                        <span className='text-sm'>Shared at : {item?.shared_at?.slice(0,10)}</span>                                        
+                                                    </div>  
+                                                }
+                                                {
+                                                    item?.followed_at &&
+                                                    <div className=' flex'>
+                                                        <span className='text-sm'>Followed at : {item?.followed_at?.slice(0,10)}</span>
+                                                    </div>  
+                                                }                                                                                   
+                                            </div>  
+                                            {
+                                                item?.shared_user_image &&
+                                                <div className='flex flex-row gap-2 items-center border-t pt-2'>
+                                                    <img src={item?.shared_user_image} className='w-5 h-5 rounded-full'/>
+                                                    <span>{item?.shared_username}</span>
+                                                 </div> 
+                                            }
+                                                    
+                                    </div>
+                                </div>
+                                :
+                                ''
+                            }
+                            </>
+
+                            
+                            ))
+                        }        
+                    </div>
+                }
+                </>
+            }
+
             {
                 selectedDropdown  === 'Self Share' &&
                 <>
@@ -219,10 +326,17 @@ const ShareLogs = () => {
                                     <div className='flex flex-col p-2 text-wrap gap-1'>
                                         <span className='line-clamp-1 font-serif'>{item?.title}</span>
                                     
-                                        <div className='flex flex-col'>
-                                            <span className='font-semibold '>${item?.price}</span>
-                                            <span className='text-sm font-semibold '>Size: <span className='font-normal'>{item?.size}</span></span>
-                                        </div>             
+                                        <div className='flex flex-row justify-between items-center '>
+                                            <div className='flex flex-col'>
+                                                <span className='font-semibold '>${item?.price}</span>
+                                            </div>
+                                            <div>
+                                                <span className='text-sm font-semibold '>Size: <span className='font-normal'>{item?.size}</span></span>                                     
+                                            </div>                                         
+                                        </div>  
+                                        <div>
+                                            <span className='text-sm'>Shared at : {item?.shared_at.slice(0,10)}</span>                                        
+                                        </div>            
                                     </div>
                                 </div>
                                 :
@@ -254,8 +368,11 @@ const ShareLogs = () => {
                                     <div key={index} className='bg-white rounded border drop-shadow '>
                                         <img src={item?.picture} 
                                         className='w-56 h-44 rounded-t'/>
-                                        <div className='flex flex-col p-2 text-wrap gap-1'>
+                                        <div className='flex flex-col px-2 py-1 text-wrap gap-1'>
                                             <span className='line-clamp-1 font-serif'>{item?.username}</span>           
+                                        </div>
+                                        <div className=' flex px-2 pb-1'>
+                                            <span className='text-sm'>Followed at : {item?.followed_at.slice(0,10)}</span>
                                         </div>
                                     </div>
                                     :
@@ -288,11 +405,23 @@ const ShareLogs = () => {
                                     className='w-56 h-44 rounded-t'/>
                                     <div className='flex flex-col p-2 text-wrap gap-1'>
                                         <span className='line-clamp-1 font-serif'>{item?.title}</span>
-                                    
-                                        <div className='flex flex-col'>
-                                            <span className='font-semibold '>${item?.price}</span>
-                                            <span className='text-sm font-semibold '>Size: <span className='font-normal'>{item?.size}</span></span>
-                                        </div>             
+                                  
+                                            <div className='flex flex-col'>
+                                                <div className='flex flex-row items-center justify-between'>
+                                                    <span className='font-semibold '>${item?.price}</span>
+                                                    <span className='text-sm font-semibold '>Size: <span className='font-normal'>{item?.size}</span></span>
+                                                </div>
+                                             
+                                                <div>
+                                                    <span className='text-sm'>Shared at : {item?.shared_at.slice(0,10)}</span>
+                                                 </div>
+                                                <div className='flex flex-row gap-2 items-center border-t pt-2'>
+                                                    <img src={item?.shared_user_image} className='w-5 h-5 rounded-full'/>
+                                                    <span>{item?.shared_username}</span>
+                                                </div> 
+                                            </div>
+                                             
+                                         
                                     </div>
                                 </div>
                                 :

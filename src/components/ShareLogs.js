@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table"
 import Image from 'next/image';
 import { useDispatch, useSelector } from 'react-redux';
-import {addingSelfShareLogs,addingFollowBackLogs,addingShareBackLogs} from '@/utils/logsSlice';
+import {addingSelfShareLogs,addingFollowBackLogs,addingShareBackLogs,addingCommunityShareLogs} from '@/utils/logsSlice';
 import { fetchCloset } from '@/services/fetchCloset';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Form from 'react-bootstrap/Form';
@@ -23,6 +23,8 @@ const ShareLogs = () => {
     const self_share_logs = useSelector((state) => state.counter.self_share_value);
     const follow_back_logs = useSelector((state) => state.counter.follow_back_value);
     const share_back_logs = useSelector((state) => state.counter.share_back_value);
+    const community_share_logs = useSelector((state) => state.counter.community_share_value);
+
     const dispatch = useDispatch();
 
    const [shareItemsStatus, setSharedItemStatus] = useState('');
@@ -37,6 +39,7 @@ const ShareLogs = () => {
    const [selfShareLogs,setSelfShareLogs] = useState([]);
    const [followBackLogs,setFollowBackLogs] = useState([]);
    const [shareBackLogs,setShareBackLogs] = useState([]);
+   const [communityShareLogs,setCommunityShareLogs] = useState([]);
    const [allLogs,setAllLogs] = useState([]);
 
    const [loadings,setLoadings] = useState(false);
@@ -63,6 +66,10 @@ const ShareLogs = () => {
     response =  await fetchLogs(userId,closet_id,'Follow Back');
     setAllLogs(prevArray => { return [...prevArray, ...response.logs]});
     setFollowBackLogs(response.logs);
+
+    response =  await fetchLogs(userId,closet_id,'Community Share');
+    setAllLogs(prevArray => { return [...prevArray, ...response.logs]});
+    setCommunityShareLogs(response.logs);
 
     setSelectedCloset(index); 
     setSelectedDropdown("All")
@@ -134,6 +141,23 @@ const ShareLogs = () => {
                     }           
                 }              
             });
+
+            socket.on('Community Share', item => {
+                let now = new Date();
+                let year = now.getFullYear();
+                let month = String(now.getMonth() + 1).padStart(2, '0'); 
+                let day = String(now.getDate()).padStart(2, '0');
+                let formattedDate = `${year}-${month}-${day}`;
+                let key = "shared_at";
+                item.packet[key] = formattedDate;
+                if(item.uid === localStorage.getItem('userId'))
+                {
+                    if(typeof(item.packet) === 'object')
+                    {
+                        dispatch(addingCommunityShareLogs(item.packet));
+                    }           
+                }              
+            });
        }
    }, [socket]);
 
@@ -170,6 +194,16 @@ const ShareLogs = () => {
             });
         }
     }, [share_back_logs]);
+
+    useEffect(() => {
+        if (community_share_logs !== undefined && loadings === false ) {
+            setCommunityShareLogs(prevArray => {
+                // const existingIds = new Set(prevArray.map(item => item.userId));
+                // const filteredNewArray = share_back_logs.filter(item => !existingIds.has(item.userId));
+                return [...prevArray, ...community_share_logs];
+            });
+        }
+    }, [community_share_logs]);
 
 
 
@@ -223,6 +257,7 @@ const ShareLogs = () => {
                     <option value="Self Share">Self Share</option>
                     <option value="Share Back">Share Back</option>
                     <option value="Follow Back">Follow Back</option>
+                    <option value="Community Share">Community Share</option>
                     {/* <option value="Like">Like</option> */}
                   </Form.Select>
                 </div>
@@ -397,6 +432,53 @@ const ShareLogs = () => {
                     <div className='grid grid-cols-5 gap-3'>
                         {
                             shareBackLogs?.slice().reverse().map((item,index)=>(
+                            <>
+                            {
+                                selectedClosetId == item.closet_id ?
+                                <div key={index} className='bg-white rounded border drop-shadow '>
+                                    <img src={item?.picture_url} 
+                                    className='w-56 h-44 rounded-t'/>
+                                    <div className='flex flex-col p-2 text-wrap gap-1'>
+                                        <span className='line-clamp-1 font-serif'>{item?.title}</span>
+                                  
+                                            <div className='flex flex-col'>
+                                                <div className='flex flex-row items-center justify-between'>
+                                                    <span className='font-semibold '>${item?.price}</span>
+                                                    <span className='text-sm font-semibold '>Size: <span className='font-normal'>{item?.size}</span></span>
+                                                </div>
+                                             
+                                                <div>
+                                                    <span className='text-sm'>Shared at : {item?.shared_at.slice(0,10)}</span>
+                                                 </div>
+                                                <div className='flex flex-row gap-2 items-center border-t pt-2'>
+                                                    <img src={item?.shared_user_image} className='w-5 h-5 rounded-full'/>
+                                                    <span>{item?.shared_username}</span>
+                                                </div> 
+                                            </div>
+                                             
+                                         
+                                    </div>
+                                </div>
+                                :
+                                ''
+                            }
+                            </>                     
+                            ))
+                        }        
+                    </div>
+                }
+                </>
+            }
+            {
+                selectedDropdown  === 'Community Share' &&
+                <>
+                 {
+                    communityShareLogs?.length == 0 ?
+                    <p className="text-base font-semibold text-center">{loadings ? "fetching logs ..." : "No logs"}</p>
+                    :
+                    <div className='grid grid-cols-5 gap-3'>
+                        {
+                            communityShareLogs?.slice().reverse().map((item,index)=>(
                             <>
                             {
                                 selectedClosetId == item.closet_id ?

@@ -11,6 +11,7 @@ import { fetchSettings } from "@/services/fetchSettings";
 import { addSettings } from "@/services/addSettings";
 import { followBack_ } from "@/services/followback";
 import { shareBack_ } from "@/services/shareback";
+import { communityShare_ } from "@/services/communityShare";
 const socket = io("http://173.230.151.165:3001");
 
 const SettingForm = () => {
@@ -89,6 +90,18 @@ const SettingForm = () => {
     }
   }
 
+  function communityShareService(status) {
+    let userId = localStorage.getItem('userId');
+    let cookie = selectedClosetCookie;
+
+    if (status) {
+      communityShare_(userId,selectedClosetId,cookie);
+      return;
+    } else {
+      socket.emit("stopProcessCommunityShare",userId,selectedClosetId);
+    }
+  }
+
 
   async function fetchSettings_(closetId){
     setLoadings(true);
@@ -96,8 +109,9 @@ const SettingForm = () => {
     setEnableServices(false);
     setSelfShare(false);
     setShareBack(false);
+    setCommunityShare(false);
     setFollowBack(false);
-    setEnableFollowCloset(false)
+    setEnableFollowCloset(false);
 
     let userId = localStorage.getItem('userId');
     let response = await fetchSettings(userId,closetId);
@@ -114,7 +128,11 @@ const SettingForm = () => {
       if(response?.closets[0]?.share.includes('share-back'))
       {
         setShareBack(true);
-        setEnableShareBack(true)
+        setShareSettingString(response?.closets[0]?.share);
+      }
+      if(response?.closets[0]?.share.includes('community-share'))
+      {
+        setCommunityShare(true);
         setShareSettingString(response?.closets[0]?.share);
       }
       if(response?.closets[0]?.follow.includes('follow-back'))
@@ -146,6 +164,15 @@ const SettingForm = () => {
         setting_share = setting_share + (setting_share === '' ? '' : ",") + input;
       }
       if(status === false  && input.includes("share-back") === true)
+      {
+        setting_share = setting_share.replace(input, '');
+      } 
+
+      if(status === true && input.includes("community-share") === true)
+      {
+        setting_share = setting_share + (setting_share === '' ? '' : ",") + input;
+      }
+      if(status === false  && input.includes("community-share") === true)
       {
         setting_share = setting_share.replace(input, '');
       } 
@@ -289,7 +316,9 @@ const SettingForm = () => {
                     type={"checkbox"}
                     defaultChecked={communityShare}
                     onClick={(e) => {
+                      addSettings_("community-share",e.currentTarget.checked);
                       setCommunityShare(e.currentTarget.checked);
+                      communityShareService(e.target.checked);
                     }}
                   />
                   <span className="ml-2">Community share</span>
@@ -447,15 +476,7 @@ const SettingForm = () => {
                     htmlFor="no-discount-checkbox"
                     className="flex items-center ml-2"
                   >
-                    <Checkbox
-                      onClick={(e) => {
-                        setNoDiscount(
-                          e.target.getAttribute("aria-checked") === "false"
-                            ? true
-                            : false
-                        );
-                      }}
-                    />
+                  
                     <Form.Check // prettier-ignore
                       type={"checkbox"}
                       defaultChecked={noDiscount}

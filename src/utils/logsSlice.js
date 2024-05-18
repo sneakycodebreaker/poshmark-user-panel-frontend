@@ -4,6 +4,7 @@ const initialState = {
   follow_back_value: [],
   self_share_value: [],
   share_back_value: [],
+  community_share_value: [],
 }
 
 export const counterSlice = createSlice({
@@ -19,10 +20,13 @@ export const counterSlice = createSlice({
     addingShareBackLogs: (state, action) => {
       state.share_back_value.push(action.payload);
     },
+    addingCommunityShareLogs: (state, action) => {
+      state.community_share_value.push(action.payload);
+    },
   },
 })
 
 // Action creators are generated for each case reducer function
-export const {addingSelfShareLogs,addingFollowBackLogs,addingShareBackLogs } = counterSlice.actions
+export const {addingSelfShareLogs,addingFollowBackLogs,addingShareBackLogs,addingCommunityShareLogs } = counterSlice.actions
 
 export default counterSlice.reducer

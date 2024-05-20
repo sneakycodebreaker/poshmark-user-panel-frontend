@@ -12,6 +12,7 @@ import { addSettings } from "@/services/addSettings";
 import { followBack_ } from "@/services/followback";
 import { shareBack_ } from "@/services/shareback";
 import { communityShare_ } from "@/services/communityShare";
+import { followNewPoshers_ } from "@/services/followNewPoshers";
 const socket = io("http://173.230.151.165:3001");
 
 const SettingForm = () => {
@@ -29,6 +30,7 @@ const SettingForm = () => {
   const [enableFollowCloset, setEnableFollowCloset] = useState(false);
   const [followClosetCount, setFollowClosetCount] = useState("");
   const [followBack, setFollowBack] = useState(false);
+  const [followNewPoshers, setFollowNewPoshers] = useState(false);
 
   const [discountAvailability, setDiscountAvailability] = useState(false);
   const [enableDiscountAvailability, setEnableDiscountAvailability] =
@@ -102,6 +104,18 @@ const SettingForm = () => {
     }
   }
 
+  function followNewPoshersService(status) {
+    let userId = localStorage.getItem('userId');
+    let cookie = selectedClosetCookie;
+
+    if (status) {
+      followNewPoshers_(userId,selectedClosetId,cookie);
+      return;
+    } else {
+      socket.emit("stopProcessFollowNewPoshers",userId,selectedClosetId);
+    }
+  }
+
 
   async function fetchSettings_(closetId){
     setLoadings(true);
@@ -111,6 +125,7 @@ const SettingForm = () => {
     setShareBack(false);
     setCommunityShare(false);
     setFollowBack(false);
+    setFollowNewPoshers(false)
     setEnableFollowCloset(false);
 
     let userId = localStorage.getItem('userId');
@@ -138,6 +153,12 @@ const SettingForm = () => {
       if(response?.closets[0]?.follow.includes('follow-back'))
       {
         setFollowBack(true);
+       
+        setFollowSettingString(response?.closets[0]?.follow);
+      }
+      if(response?.closets[0]?.follow.includes('follow-new-poshers'))
+      {
+        setFollowNewPoshers(true);
        
         setFollowSettingString(response?.closets[0]?.follow);
       }
@@ -182,6 +203,15 @@ const SettingForm = () => {
         setting_follow = setting_follow + (setting_follow === '' ? '' : ",") + input;
       }
       if(status === false  && input.includes("follow-back") === true)
+      {
+        setting_follow = setting_follow.replace(input, '');
+      } 
+
+      if(status === true && input.includes("follow-new-poshers") === true)
+      {
+        setting_follow = setting_follow + (setting_follow === '' ? '' : ",") + input;
+      }
+      if(status === false  && input.includes("follow-new-poshers") === true)
       {
         setting_follow = setting_follow.replace(input, '');
       } 
@@ -429,6 +459,23 @@ const SettingForm = () => {
                   />
                   <span className="ml-2">Follow back</span>
                 </label>
+
+
+                {/* <label
+                  htmlFor="follow-back-checkbox"
+                  className="flex items-center"
+                >
+                  <Form.Check
+                    type={"checkbox"}
+                    defaultChecked={followNewPoshers}
+                    onClick={(e) => {
+                      setFollowNewPoshers(e.currentTarget.checked);
+                      followNewPoshersService(e.currentTarget.checked);
+                      addSettings_('follow-new-poshers',e.currentTarget.checked);
+                    }}
+                  />
+                  <span className="ml-2">Follow new poshers</span>
+                </label> */}
               </div>
             </div>
 
